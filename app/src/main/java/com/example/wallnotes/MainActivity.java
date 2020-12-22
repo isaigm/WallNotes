@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(view -> {
             Intent intent = new Intent(getBaseContext(), EditNoteActivity.class);
@@ -75,8 +74,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
-        if(id == R.id.search_bar){
-            Log.d("DEBUG", "Click search bar");
+        if(id == R.id.action_settings){
+            startActivity(new Intent(getBaseContext(), SettingsActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }

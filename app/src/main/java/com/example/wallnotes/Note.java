@@ -8,9 +8,13 @@ public class Note {
     @PrimaryKey(autoGenerate = true)
     public int uid;
 
-    @ColumnInfo(name = "text")
-    public String text;
-    public Note(String text){
-        this.text = text;
+    @ColumnInfo(name = "title")
+    public String title;
+
+    @ColumnInfo(name = "content")
+    public String content;
+    public Note(String title, String content){
+        this.title = title;
+        this.content = content;
     }
 }

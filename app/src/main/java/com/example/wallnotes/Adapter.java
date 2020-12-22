@@ -5,7 +5,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
@@ -64,7 +63,8 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
             itemView.setOnClickListener(this);
         }
         public void setData(Note note) {
-            this.text.setText(note.text);
+            String t = note.title + "\n" + note.content;
+            this.text.setText(t);
         }
         @Override
         public void onClick(View v) {

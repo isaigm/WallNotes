@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory app:title="VISUALIZACIÓN">
+      <ListPreference
+          app:key="theme"
+          app:title="Tema"
+          app:summary="Elige el tema"
+          app:entries="@array/list_themes"
+          app:entryValues="@array/list_themes">
 
-    <SwitchPreferenceCompat
-        app:key="notifications"
-        app:title="Enable message notifications"/>
-
-    <Preference
-        app:key="feedback"
-        app:title="Send feedback"
-        app:summary="Report technical issues or suggest new features"/>
+      </ListPreference>
+    </PreferenceCategory>
 
 </PreferenceScreen>
