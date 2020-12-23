@@ -5,9 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".EditNoteActivity"
-
     android:orientation="vertical">
-
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -22,7 +20,6 @@
             android:background="?attr/colorPrimary"
             app:popupTheme="@style/Theme.WallNotes.PopupOverlay"
             />
-
     </com.google.android.material.appbar.AppBarLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -30,38 +27,53 @@
         android:orientation="vertical"
         android:layout_below="@+id/appbar"
         android:layout_marginBottom="?actionBarSize">
-        <EditText
-            android:id="@+id/title"
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:hint="Título"
-            android:textSize="24sp" />
-
-        <EditText
-            android:id="@+id/content"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="17sp"
-            android:hint="Nota"
-            android:layout_marginLeft="10dp"
-            android:scrollbars="vertical"
-            android:gravity="bottom"
-            android:layout_marginRight="10dp"
-            />
+            android:layout_height="wrap_content">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <ImageView
+                    android:id="@+id/image"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:adjustViewBounds="true"
+                    android:scaleType="centerCrop"
+                    />
+                <EditText
+                    android:id="@+id/title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:inputType="textMultiLine"
+                    android:importantForAutofill="no"
+                    android:hint="Título"
+                    android:textSize="24sp" />
+                <EditText
+                    android:id="@+id/content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="17sp"
+                    android:hint="Nota"
+                    android:inputType="textMultiLine"
+                    android:importantForAutofill="no"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    />
+            </LinearLayout>
+        </ScrollView>
     </LinearLayout>
-
     <androidx.coordinatorlayout.widget.CoordinatorLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
     <com.google.android.material.bottomappbar.BottomAppBar
         android:id="@+id/bottom_app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        style="@style/Widget.MaterialComponents.BottomAppBar.Colored"
+        style="@style/Widget.MaterialComponents.BottomAppBar.PrimarySurface"
         app:menu="@menu/bottom_nav_menu"/>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </RelativeLayout>

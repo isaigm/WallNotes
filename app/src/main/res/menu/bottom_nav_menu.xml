@@ -8,9 +8,10 @@
         app:showAsAction="ifRoom|collapseActionView"
         android:title="Más">
     <menu>
-        <item android:id="@+id/delete" android:title="Eliminar"/>
+        <item android:id="@+id/take_photo" android:title="Tomar una foto" android:icon="@drawable/ic_menu_camera"/>
+        <item android:id="@+id/add_img" android:title="Agregar una imagen" android:icon="@drawable/image"/>
+        <item android:id="@+id/add_audio" android:title="Agregar nota de audio" android:icon="@drawable/micro"/>
+        <item android:id="@+id/delete" android:icon="@drawable/papelera" android:title="Eliminar"/>
     </menu>
-
     </item>
-
 </menu>

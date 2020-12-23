@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,10 +25,9 @@ import com.example.wallnotes.NoteViewModel;
 import com.example.wallnotes.R;
 import java.util.ArrayList;
 import java.util.List;
-public class HomeFragment extends Fragment implements Adapter.OnClickNoteListener {
+public class HomeFragment extends Fragment implements Adapter.OnClickNoteListener, Adapter.OnLongClickListener {
 
     private NoteViewModel mNoteViewModel;
-    private boolean mResults;
     private BroadcastReceiver mBroadcastReceiver;
     private RecyclerView.AdapterDataObserver mObserver;
     private Adapter adapter;
@@ -37,8 +37,8 @@ public class HomeFragment extends Fragment implements Adapter.OnClickNoteListene
         RecyclerView recyclerView = root.findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         List<Note> data = new ArrayList<>();
-        adapter = new Adapter(data, this);
-        mNoteViewModel.getAllNotes().observe(getViewLifecycleOwner(), adapter::setData);
+        adapter = new Adapter(data, this, this);
+        mNoteViewModel.getAllNotes().observe(getViewLifecycleOwner(), adapter::setmData);
         recyclerView.setAdapter(adapter);
         final TextView textView = root.findViewById(R.id.text_home);
         mObserver = new RecyclerView.AdapterDataObserver() {
@@ -61,12 +61,16 @@ public class HomeFragment extends Fragment implements Adapter.OnClickNoteListene
                 if(intent != null){
                     boolean mustUpdateNote = intent.getBooleanExtra("must_update_note", false);
                     boolean mustDeleteNote = intent.getBooleanExtra("must_delete", false);
-                    Note note = new Note(intent.getStringExtra("title"), intent.getStringExtra("content"));
+                    String imgUri = intent.getStringExtra("img_uri");
+                    Note note = new Note(intent.getStringExtra("title"), intent.getStringExtra("content"), null);
+                    if(imgUri != null){
+                        note.setImgUri(imgUri);
+                    }
                     if(mustUpdateNote){
-                        note.uid = intent.getIntExtra("uid", 0);
+                        note.setUid(intent.getIntExtra("uid", 0));
                         mNoteViewModel.update(note);
                     }else if (mustDeleteNote){
-                        note.uid = intent.getIntExtra("uid", 0);
+                        note.setUid(intent.getIntExtra("uid", 0));
                         mNoteViewModel.delete(note);
                     }else {
                         mNoteViewModel.addNote(note);
@@ -79,7 +83,7 @@ public class HomeFragment extends Fragment implements Adapter.OnClickNoteListene
     }
     void getNotesFromDb(String text){
         mNoteViewModel.search(text).observe(this, notes -> {
-            adapter.setData(notes);
+            adapter.setmData(notes);
         });
     }
     @Override
@@ -118,11 +122,15 @@ public class HomeFragment extends Fragment implements Adapter.OnClickNoteListene
     }
     @Override
     public void onClick(int pos) {
-        Note note = adapter.getData().get(pos);
+        Note note = adapter.getmData().get(pos);
         Intent intent = new Intent(getActivity(), EditNoteActivity.class);
-        intent.putExtra("title", note.title);
-        intent.putExtra("content", note.content);
-        intent.putExtra("uid", note.uid);
+        intent.putExtra("title", note.getTitle());
+        intent.putExtra("content", note.getContent());
+        intent.putExtra("uid", note.getUid());
         startActivity(intent);
+    }
+    @Override
+    public boolean onLongClick(int n) {
+        return false;
     }
 }

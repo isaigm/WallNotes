@@ -8,30 +8,30 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class NoteRepository {
-    private NoteDAO noteDao;
+    private final NoteDAO mNoteDao;
     private final LiveData<List<Note>> mAllNotes;
     NoteRepository(Application application) {
         AppDatabase db = AppDatabase.getInstance(application);
-        noteDao = db.noteDAO();
-        mAllNotes = noteDao.getAll();
+        mNoteDao = db.noteDAO();
+        mAllNotes = mNoteDao.getAll();
     }
     public LiveData<List<Note>> getAllNotes() {
         return mAllNotes;
     }
     public void addNote(Note note)
     {
-        new insertAsyncTask(noteDao).execute(note);
+        new insertAsyncTask(mNoteDao).execute(note);
     }
     public void update(Note note)
     {
-        new updateAsyncTask(noteDao).execute(note);
+        new updateAsyncTask(mNoteDao).execute(note);
     }
     public void delete(Note note)
     {
-        new deleteAsyncTask(noteDao).execute(note);
+        new deleteAsyncTask(mNoteDao).execute(note);
     }
     public LiveData<List<Note>> search(String text)  {
-        searchAsyncTask asyncTask = new searchAsyncTask(noteDao);
+        searchAsyncTask asyncTask = new searchAsyncTask(mNoteDao);
         LiveData<List<Note>> res = null;
         try {
             res = asyncTask.execute(text).get();
@@ -80,7 +80,7 @@ public class NoteRepository {
         }
         @Override
         protected LiveData<List<Note>> doInBackground(final String... params) {
-            return mAsyncTaskDao.getSearchResults("%"+params[0]+"%");
+            return mAsyncTaskDao.getSearchResults("%" + params[0] + "%");
         }
     }
 }

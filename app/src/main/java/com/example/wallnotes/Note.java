@@ -6,15 +6,51 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "notes")
 public class Note {
     @PrimaryKey(autoGenerate = true)
-    public int uid;
+    private int uid;
 
     @ColumnInfo(name = "title")
-    public String title;
-
+    private String title;
     @ColumnInfo(name = "content")
-    public String content;
-    public Note(String title, String content){
+    private String content;
+
+    public int getUid() {
+        return uid;
+    }
+
+    public void setUid(int uid) {
+        this.uid = uid;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public String getImgUri() {
+        return imgUri;
+    }
+
+    public void setImgUri(String imgUri) {
+        this.imgUri = imgUri;
+    }
+
+    @ColumnInfo(name = "uriImg")
+    private String imgUri;
+
+    public Note(String title, String content, String imgUri){
         this.title = title;
         this.content = content;
+        this.imgUri = imgUri;
     }
 }
