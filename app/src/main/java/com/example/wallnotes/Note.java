@@ -46,7 +46,7 @@ public class Note {
     }
 
     @ColumnInfo(name = "uriImg")
-    private String imgUri;
+    private String imgUri = null;
 
     public Note(String title, String content, String imgUri){
         this.title = title;

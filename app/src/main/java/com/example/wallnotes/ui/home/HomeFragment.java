@@ -127,6 +127,7 @@ public class HomeFragment extends Fragment implements Adapter.OnClickNoteListene
         intent.putExtra("title", note.getTitle());
         intent.putExtra("content", note.getContent());
         intent.putExtra("uid", note.getUid());
+        intent.putExtra("img_uri", note.getImgUri());
         startActivity(intent);
     }
     @Override

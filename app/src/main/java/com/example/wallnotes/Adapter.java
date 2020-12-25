@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
@@ -29,21 +30,12 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Note note = mData.get(position);
         holder.setData(note);
+        holder.imageView.setImageDrawable(null);
         if(note.getImgUri() != null){
-            Picasso.get().load(Uri.parse(note.getImgUri()))
-                    .into(holder.imageView, new Callback() {
-                        @Override
-                        public void onSuccess() {
-
-                        }
-
-                        @Override
-                        public void onError(Exception e) {
-                            System.out.println(e.toString());
-                        }
-                    });
-            System.out.println("HERE");
-            System.out.println(note.getImgUri());
+            Glide.with(holder.itemView.getContext())
+                    .load(note.getImgUri())
+                    .error(R.drawable.reload)
+                    .into(holder.imageView);
         }
     }
     public void setmData(List<Note> newData){

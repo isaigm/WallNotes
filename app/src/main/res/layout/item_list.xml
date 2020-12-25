@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:animateLayoutChanges="true"
+    app:cardElevation="4dp"
     app:cardCornerRadius="4dp"
     app:cardUseCompatPadding="true">
     <RelativeLayout
@@ -17,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
-            android:scaleType="centerCrop"
+            android:scaleType="fitStart"
             android:id="@+id/img" />
         <RelativeLayout
             android:layout_width="match_parent"
