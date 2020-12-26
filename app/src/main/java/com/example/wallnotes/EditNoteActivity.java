@@ -64,6 +64,7 @@ public class EditNoteActivity extends AppCompatActivity {
             mCurrNote = new Note(data.getString("title"), data.getString("content"), null);
             mCurrNote.setUid(data.getInt("uid"));
             mCurrNote.setImgUri(data.getString("img_uri"));
+            mCurrNote.setCreatedAt((Date) data.getSerializable("created_at"));
             mUpdate = true;
             mTitle.setText(mCurrNote.getTitle());
             mContent.setText(mCurrNote.getContent());
@@ -86,6 +87,7 @@ public class EditNoteActivity extends AppCompatActivity {
                     intent.putExtra("content", content);
                     intent.putExtra("must_delete", true);
                     intent.putExtra("img_uri", mImgUri);
+                    intent.putExtra("created_at", mCurrNote.getCreatedAt());
                     sendBroadcast(intent);
                     finish();
                 }
@@ -152,6 +154,7 @@ public class EditNoteActivity extends AppCompatActivity {
             intent.putExtra("content", content);
             intent.putExtra("must_update_note", mUpdate);
             intent.putExtra("img_uri", mImgUri);
+            intent.putExtra("created_at", mCurrNote == null ? null : mCurrNote.getCreatedAt());
             sendBroadcast(intent);
         }
         finish();

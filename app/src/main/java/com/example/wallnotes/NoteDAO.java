@@ -27,4 +27,5 @@ public interface NoteDAO {
 
     @Query("SELECT * FROM notes WHERE title LIKE  :text")
     LiveData<List<Note>> getSearchResults(String text);
+
 }

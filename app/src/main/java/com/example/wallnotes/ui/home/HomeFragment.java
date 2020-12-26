@@ -11,7 +11,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.appcompat.widget.SearchView;
-
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
 import android.widget.TextView;
@@ -21,13 +20,16 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
-
 import com.example.wallnotes.Adapter;
 import com.example.wallnotes.Note;
 import com.example.wallnotes.NoteViewModel;
 import com.example.wallnotes.R;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public class HomeFragment extends Fragment{
@@ -70,6 +72,7 @@ public class HomeFragment extends Fragment{
                     boolean mustDeleteNote = intent.getBooleanExtra("must_delete", false);
                     String imgUri = intent.getStringExtra("img_uri");
                     Note note = new Note(intent.getStringExtra("title"), intent.getStringExtra("content"), null);
+                    note.setCreatedAt((Date) intent.getSerializableExtra("created_at"));
                     if(imgUri != null){
                         note.setImgUri(imgUri);
                     }
@@ -80,6 +83,9 @@ public class HomeFragment extends Fragment{
                         note.setUid(intent.getIntExtra("uid", 0));
                         mNoteViewModel.delete(note);
                     }else {
+                        DateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss", Locale.US);
+                        Date currDate = new Date();
+                        note.setCreatedAt(currDate);
                         mNoteViewModel.addNote(note);
                     }
                 }
@@ -93,7 +99,6 @@ public class HomeFragment extends Fragment{
             mAdapter.setmData(notes);
         });
     }
-
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == R.id.change_layout)

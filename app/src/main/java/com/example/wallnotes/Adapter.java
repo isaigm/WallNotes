@@ -103,7 +103,10 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
                 intent.putExtra("content", note.getContent());
                 intent.putExtra("uid", note.getUid());
                 intent.putExtra("img_uri", note.getImgUri());
+                intent.putExtra("created_at", note.getCreatedAt());
+                System.out.println(note.getCreatedAt().toString());
                 mActivity.startActivity(intent);
+                mActivity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
             }
         });
         if(mIsSelectAll){
