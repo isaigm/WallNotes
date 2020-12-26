@@ -38,6 +38,13 @@ public class EditNoteActivity extends AppCompatActivity {
     private Note mCurrNote;
     private String mImgUri = null;
     private String mPhotoPath = null;
+    public void loadImage(String uri)
+    {
+        Glide.with(this)
+                .load(uri)
+                .error(R.drawable.reload)
+                .into(mImageView);
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,10 +58,6 @@ public class EditNoteActivity extends AppCompatActivity {
         mTitle = findViewById(R.id.title);
         mContent = findViewById(R.id.content);
         mImageView = findViewById(R.id.image);
-        mTitle.setFocusableInTouchMode(true);
-        mTitle.requestFocus();
-        mContent.setFocusableInTouchMode(true);
-        mContent.requestFocus();
         mContent.setMovementMethod(new ScrollingMovementMethod());
         Bundle data = getIntent().getExtras();
         if(data != null){
@@ -66,10 +69,7 @@ public class EditNoteActivity extends AppCompatActivity {
             mContent.setText(mCurrNote.getContent());
             if(mCurrNote.getImgUri() != null)
             {
-                Glide.with(this)
-                        .load(mCurrNote.getImgUri())
-                        .error(R.drawable.reload)
-                        .into(mImageView);
+                loadImage(mCurrNote.getImgUri());
                 mImgUri = mCurrNote.getImgUri();
             }
         }
@@ -92,6 +92,7 @@ public class EditNoteActivity extends AppCompatActivity {
             }else if(id == R.id.add_img){
                 Intent intent = new Intent(Intent.ACTION_PICK);
                 intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/");
+                mPhotoPath = null;
                 startActivityForResult(intent, REQUEST_IMAGE);
             }else if(id == R.id.take_photo){
                 if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
@@ -111,18 +112,12 @@ public class EditNoteActivity extends AppCompatActivity {
         if(requestCode == REQUEST_IMAGE){
             if(resultCode == RESULT_OK && data != null){
                 mImgUri = data.getDataString();
-                Glide.with(this)
-                        .load(mImgUri)
-                        .error(R.drawable.reload)
-                        .into(mImageView);
+                loadImage(mImgUri);
             }
         }else if(requestCode == REQUEST_CAMERA){
             if(resultCode == RESULT_OK)
             {
-                Glide.with(this)
-                        .load(mPhotoPath)
-                        .error(R.drawable.reload)
-                        .into(mImageView);
+                loadImage(mPhotoPath);
             }
         }
     }

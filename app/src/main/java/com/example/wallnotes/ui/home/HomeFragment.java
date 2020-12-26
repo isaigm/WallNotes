@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -12,47 +11,55 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.appcompat.widget.SearchView;
+
+import android.view.animation.AnimationUtils;
+import android.view.animation.LayoutAnimationController;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+
 import com.example.wallnotes.Adapter;
-import com.example.wallnotes.EditNoteActivity;
 import com.example.wallnotes.Note;
 import com.example.wallnotes.NoteViewModel;
 import com.example.wallnotes.R;
 import java.util.ArrayList;
 import java.util.List;
-public class HomeFragment extends Fragment implements Adapter.OnClickNoteListener, Adapter.OnLongClickListener {
+import java.util.Objects;
+
+public class HomeFragment extends Fragment{
 
     private NoteViewModel mNoteViewModel;
     private BroadcastReceiver mBroadcastReceiver;
     private RecyclerView.AdapterDataObserver mObserver;
-    private Adapter adapter;
+    private Adapter mAdapter;
+    private boolean mUseLinearLayout = true;
+    private RecyclerView mRecyclerview;
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mNoteViewModel = new ViewModelProvider(this).get(NoteViewModel.class);
         View root = inflater.inflate(R.layout.fragment_home, container, false);
-        RecyclerView recyclerView = root.findViewById(R.id.recycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        mRecyclerview = root.findViewById(R.id.recycler_view);
+        mRecyclerview.setLayoutManager(new LinearLayoutManager(getActivity()));
         List<Note> data = new ArrayList<>();
-        adapter = new Adapter(data, this, this);
-        mNoteViewModel.getAllNotes().observe(getViewLifecycleOwner(), adapter::setmData);
-        recyclerView.setAdapter(adapter);
+        mAdapter = new Adapter(data, getActivity());
+        mNoteViewModel.getAllNotes().observe(getViewLifecycleOwner(), mAdapter::setmData);
+        mRecyclerview.setAdapter(mAdapter);
         final TextView textView = root.findViewById(R.id.text_home);
         mObserver = new RecyclerView.AdapterDataObserver() {
             @Override
             public void onChanged() {
                 super.onChanged();
-                if(adapter.getItemCount() > 0){
+                if(mAdapter.getItemCount() > 0){
                     textView.setVisibility(View.INVISIBLE);
-                }else if (adapter.getItemCount() == 0){
+                }else if (mAdapter.getItemCount() == 0){
                     textView.setVisibility(View.VISIBLE);
                 }
             }
         };
-        adapter.registerAdapterDataObserver(mObserver);
+        mAdapter.registerAdapterDataObserver(mObserver);
         setHasOptionsMenu(true);
         IntentFilter filter = new IntentFilter("DATA");
         mBroadcastReceiver = new BroadcastReceiver() {
@@ -83,8 +90,29 @@ public class HomeFragment extends Fragment implements Adapter.OnClickNoteListene
     }
     void getNotesFromDb(String text){
         mNoteViewModel.search(text).observe(this, notes -> {
-            adapter.setmData(notes);
+            mAdapter.setmData(notes);
         });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId() == R.id.change_layout)
+        {
+            mUseLinearLayout = !mUseLinearLayout;
+            if(mUseLinearLayout)
+            {
+                item.setIcon(R.drawable.ic_baseline_view_list_24);
+                mRecyclerview.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+            }else{
+                item.setIcon(R.drawable.ic_baseline_view_grid);
+                mRecyclerview.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
+            }
+            mRecyclerview.setAdapter(mAdapter);
+            runLayoutAnimation(mRecyclerview);
+        }
+        return super.onOptionsItemSelected(item);
+
     }
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
@@ -112,26 +140,21 @@ public class HomeFragment extends Fragment implements Adapter.OnClickNoteListene
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if(adapter != null && mObserver != null){
-            adapter.unregisterAdapterDataObserver(mObserver);
+        if(mAdapter != null && mObserver != null){
+            mAdapter.unregisterAdapterDataObserver(mObserver);
         }
         if(mBroadcastReceiver != null)
         {
             requireActivity().unregisterReceiver(mBroadcastReceiver);
         }
     }
-    @Override
-    public void onClick(int pos) {
-        Note note = adapter.getmData().get(pos);
-        Intent intent = new Intent(getActivity(), EditNoteActivity.class);
-        intent.putExtra("title", note.getTitle());
-        intent.putExtra("content", note.getContent());
-        intent.putExtra("uid", note.getUid());
-        intent.putExtra("img_uri", note.getImgUri());
-        startActivity(intent);
-    }
-    @Override
-    public boolean onLongClick(int n) {
-        return false;
+    private void runLayoutAnimation(final RecyclerView recyclerView) {
+        final Context context = recyclerView.getContext();
+        final LayoutAnimationController controller =
+                AnimationUtils.loadLayoutAnimation(context, R.anim.animation_layout);
+
+        recyclerView.setLayoutAnimation(controller);
+        Objects.requireNonNull(recyclerView.getAdapter()).notifyDataSetChanged();
+        recyclerView.scheduleLayoutAnimation();
     }
 }

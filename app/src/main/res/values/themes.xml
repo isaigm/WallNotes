@@ -17,6 +17,9 @@
     <style name="Theme.WallNotes.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+
+
+
     </style>
 
     <style name="Theme.WallNotes.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />

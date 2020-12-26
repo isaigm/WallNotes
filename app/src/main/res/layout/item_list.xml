@@ -31,7 +31,7 @@
                 android:id="@+id/text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="20sp"
+                android:textSize="13sp"
                 android:maxHeight="200dp"
                 android:padding="10dp"
                 android:ellipsize="end" />

@@ -67,12 +67,13 @@
     <androidx.coordinatorlayout.widget.CoordinatorLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <com.google.android.material.bottomappbar.BottomAppBar
-        android:id="@+id/bottom_app_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        style="@style/Widget.MaterialComponents.BottomAppBar.PrimarySurface"
-        app:menu="@menu/bottom_nav_menu"/>
+
+        <com.google.android.material.bottomappbar.BottomAppBar
+            android:id="@+id/bottom_app_bar"
+            style="@style/Widget.MaterialComponents.BottomAppBar.PrimarySurface"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            app:menu="@menu/bottom_nav_menu" />
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </RelativeLayout>
