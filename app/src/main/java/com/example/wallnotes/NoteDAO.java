@@ -6,8 +6,8 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
-
 import java.util.List;
+
 @Dao
 public interface NoteDAO {
     @Query("SELECT * FROM notes")
@@ -27,5 +27,11 @@ public interface NoteDAO {
 
     @Query("SELECT * FROM notes WHERE title LIKE  :text")
     LiveData<List<Note>> getSearchResults(String text);
+
+    @Query("SELECT * FROM notes WHERE is_going_to_be_deleted")
+    LiveData<List<Note>> getNotesToBeDeleted();
+
+    @Query("SELECT * FROM notes WHERE NOT is_going_to_be_deleted")
+    LiveData<List<Note>> getCurrentNotes();
 
 }

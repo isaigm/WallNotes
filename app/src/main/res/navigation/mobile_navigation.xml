@@ -7,9 +7,9 @@
 
     <fragment
         android:id="@+id/nav_home"
-        android:name="com.example.wallnotes.ui.home.HomeFragment"
+        android:name="com.example.wallnotes.ui.notes.NoteFragment"
         android:label="@string/menu_home"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_note" />
 
     <fragment
         android:id="@+id/nav_gallery"
@@ -18,8 +18,12 @@
         tools:layout="@layout/fragment_gallery" />
 
     <fragment
-        android:id="@+id/nav_slideshow"
-        android:name="com.example.wallnotes.ui.slideshow.SlideshowFragment"
+        android:id="@+id/nav_recycle"
+        android:name="com.example.wallnotes.ui.recyclebin.RecycleBinFragment"
         android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
+        tools:layout="@layout/fragment_recyclebin" />
+    <fragment
+        android:id="@+id/nav_conf"
+        android:name="com.example.wallnotes.ui.configuration.SettingsFragment"
+        android:label="Configuración" />
 </navigation>

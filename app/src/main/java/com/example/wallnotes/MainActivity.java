@@ -1,27 +1,17 @@
 package com.example.wallnotes;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.MenuItem;
-import android.view.View;
 import android.view.Menu;
-
-import com.example.wallnotes.ui.gallery.GalleryFragment;
+import android.view.ViewParent;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
+import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -29,14 +19,8 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.room.Database;
-import androidx.room.Room;
-import androidx.room.RoomDatabase;
 
-import java.util.List;
-import java.util.Objects;
-
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity  {
     private AppBarConfiguration mAppBarConfiguration;
 
     @Override
@@ -60,35 +44,42 @@ public class MainActivity extends AppCompatActivity {
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow)
+                R.id.nav_home, R.id.nav_gallery, R.id.nav_recycle, R.id.nav_conf)
                 .setDrawerLayout(drawer)
                 .build();
+
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+        navigationView.setNavigationItemSelectedListener(item -> {
+            if(item.getItemId() == R.id.nav_conf || item.getItemId() == R.id.nav_recycle){
+                fab.hide();
+            }else {
+                fab.show();
+            }
+            FragmentManager fm = getSupportFragmentManager();
+            fm.popBackStackImmediate();
+            boolean handled = NavigationUI.onNavDestinationSelected(item, navController);
+            if (handled) {
+                ViewParent parent = navigationView.getParent();
+                if (parent instanceof DrawerLayout) {
+                    ((DrawerLayout) parent).closeDrawer(navigationView);
+                }
+            }
+            return handled;
+        });
     }
     @Override
     protected void onStart() {
         super.onStart();
         requestRead();
     }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
-        if(id == R.id.action_settings){
-            startActivity(new Intent(getBaseContext(), SettingsActivity.class));
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
     @Override
     public boolean onSupportNavigateUp() {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);

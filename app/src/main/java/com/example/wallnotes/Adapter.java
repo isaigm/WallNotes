@@ -31,10 +31,11 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     private SizeViewModel mSizeViewModel;
     private boolean mIsEnable = false;
     private boolean mIsSelectAll = false;
+    private final NoteViewModel mNoteViewModel;
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_list, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.note_item_list, parent, false);
         mSizeViewModel = new ViewModelProvider((ViewModelStoreOwner) mActivity).get(SizeViewModel.class);
         return new ViewHolder(view);
     }
@@ -61,7 +62,15 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
                    @Override
                    public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
                        int id = item.getItemId();
-                       if(id == R.id.menu_select_all)
+                       if(id == R.id.menu_delete){
+                           for(int i = 0; i < mSelectedNotes.size(); i++){
+                               Note n = mSelectedNotes.get(i);
+                               n.setGoingToBeDeleted(true);
+                               mNoteViewModel.update(n);
+                           }
+                           mode.finish();
+                       }
+                       else if(id == R.id.menu_select_all)
                        {
                            if(mSelectedNotes.size() == mData.size())
                            {
@@ -104,7 +113,6 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
                 intent.putExtra("uid", note.getUid());
                 intent.putExtra("img_uri", note.getImgUri());
                 intent.putExtra("created_at", note.getCreatedAt());
-                System.out.println(note.getCreatedAt().toString());
                 mActivity.startActivity(intent);
                 mActivity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
             }
@@ -143,12 +151,10 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
             mData = newData;
         }
     }
-    public List<Note> getmData(){
-        return mData;
-    }
-    public Adapter(List<Note> data, Activity activity){
+    public Adapter(List<Note> data, Activity activity, NoteViewModel noteViewModel){
         this.mData = data;
         this.mActivity = activity;
+        this.mNoteViewModel = noteViewModel;
     }
     @Override
     public int getItemCount() {

@@ -19,6 +19,8 @@ public class Note {
     private String content;
     @ColumnInfo(name = "uriImg")
     private String imgUri = null;
+    @ColumnInfo(name = "is_going_to_be_deleted")
+    private boolean isGoingToBeDeleted;
     public int getUid() {
         return uid;
     }
@@ -49,10 +51,17 @@ public class Note {
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
+    public boolean isGoingToBeDeleted() {
+        return isGoingToBeDeleted;
+    }
+    public void setGoingToBeDeleted(boolean goingToBeDeleted) {
+        isGoingToBeDeleted = goingToBeDeleted;
+    }
     public Note(String title, String content, String imgUri){
         this.title = title;
         this.content = content;
         this.imgUri = imgUri;
         this.createdAt = null;
+        this.isGoingToBeDeleted = false;
     }
 }

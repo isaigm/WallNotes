@@ -1,4 +1,4 @@
-package com.example.wallnotes.ui.home;
+package com.example.wallnotes.ui.notes;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-public class HomeFragment extends Fragment{
+public class NoteFragment extends Fragment{
 
     private NoteViewModel mNoteViewModel;
     private BroadcastReceiver mBroadcastReceiver;
@@ -42,12 +42,12 @@ public class HomeFragment extends Fragment{
     private RecyclerView mRecyclerview;
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mNoteViewModel = new ViewModelProvider(this).get(NoteViewModel.class);
-        View root = inflater.inflate(R.layout.fragment_home, container, false);
+        View root = inflater.inflate(R.layout.fragment_note, container, false);
         mRecyclerview = root.findViewById(R.id.recycler_view);
         mRecyclerview.setLayoutManager(new LinearLayoutManager(getActivity()));
         List<Note> data = new ArrayList<>();
-        mAdapter = new Adapter(data, getActivity());
-        mNoteViewModel.getAllNotes().observe(getViewLifecycleOwner(), mAdapter::setmData);
+        mAdapter = new Adapter(data, getActivity(), mNoteViewModel);
+        mNoteViewModel.getCurrNotes().observe(getViewLifecycleOwner(), mAdapter::setmData);
         mRecyclerview.setAdapter(mAdapter);
         final TextView textView = root.findViewById(R.id.text_home);
         mObserver = new RecyclerView.AdapterDataObserver() {
@@ -81,7 +81,8 @@ public class HomeFragment extends Fragment{
                         mNoteViewModel.update(note);
                     }else if (mustDeleteNote){
                         note.setUid(intent.getIntExtra("uid", 0));
-                        mNoteViewModel.delete(note);
+                        note.setGoingToBeDeleted(true);
+                        mNoteViewModel.update(note);
                     }else {
                         DateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss", Locale.US);
                         Date currDate = new Date();
@@ -117,12 +118,12 @@ public class HomeFragment extends Fragment{
             runLayoutAnimation(mRecyclerview);
         }
         return super.onOptionsItemSelected(item);
-
     }
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
         MenuItem mSearchMenuItem = menu.findItem(R.id.search);
         SearchView searchView = (SearchView) mSearchMenuItem.getActionView();
+        menu.findItem(R.id.delete_notes).setVisible(false);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {

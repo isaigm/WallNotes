@@ -24,8 +24,7 @@
             android:name="android.support.FILE_PROVIDER_PATHS"
             android:resource="@xml/filepaths"/>
         </provider>
-        <activity android:name=".SettingsActivity"/>
-        
+
         <activity android:name=".EditNoteActivity" android:windowSoftInputMode="stateHidden" />
         <activity
             android:name=".MainActivity"

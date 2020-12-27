@@ -8,17 +8,21 @@ import java.util.List;
 
 public class NoteViewModel extends AndroidViewModel {
     private NoteRepository noteRepository;
-    private LiveData<List<Note>> mAllNotes;
-
+    private LiveData<List<Note>> mCurrNotes;
+    private LiveData<List<Note>> mNotesToBeDeleted;
 
     public NoteViewModel(@NonNull Application application) {
         super(application);
         noteRepository = new NoteRepository(application);
-        mAllNotes = noteRepository.getAllNotes();
+        mCurrNotes = noteRepository.getCurrNotes();
+        mNotesToBeDeleted = noteRepository.getNotesToBeDeleted();
     }
 
-    public LiveData<List<Note>> getAllNotes() {
-        return mAllNotes;
+    public LiveData<List<Note>> getCurrNotes() {
+        return mCurrNotes;
+    }
+    public LiveData<List<Note>> getNotesToBeDeleted() {
+        return mNotesToBeDeleted;
     }
 
     public void addNote(Note note) {

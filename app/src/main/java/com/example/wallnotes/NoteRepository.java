@@ -9,14 +9,19 @@ import java.util.concurrent.ExecutionException;
 
 public class NoteRepository {
     private final NoteDAO mNoteDao;
-    private final LiveData<List<Note>> mAllNotes;
+    private final LiveData<List<Note>> mCurrNotes;
+    private final LiveData<List<Note>> mNotesToBeDeleted;
     NoteRepository(Application application) {
         AppDatabase db = AppDatabase.getInstance(application);
         mNoteDao = db.noteDAO();
-        mAllNotes = mNoteDao.getAll();
+        mCurrNotes = mNoteDao.getCurrentNotes();
+        mNotesToBeDeleted = mNoteDao.getNotesToBeDeleted();
     }
-    public LiveData<List<Note>> getAllNotes() {
-        return mAllNotes;
+    public LiveData<List<Note>> getCurrNotes() {
+        return mCurrNotes;
+    }
+    public LiveData<List<Note>> getNotesToBeDeleted() {
+        return mNotesToBeDeleted;
     }
     public void addNote(Note note)
     {
