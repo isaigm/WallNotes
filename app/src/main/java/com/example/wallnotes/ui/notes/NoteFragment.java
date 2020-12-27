@@ -158,7 +158,6 @@ public class NoteFragment extends Fragment{
         final Context context = recyclerView.getContext();
         final LayoutAnimationController controller =
                 AnimationUtils.loadLayoutAnimation(context, R.anim.animation_layout);
-
         recyclerView.setLayoutAnimation(controller);
         Objects.requireNonNull(recyclerView.getAdapter()).notifyDataSetChanged();
         recyclerView.scheduleLayoutAnimation();
