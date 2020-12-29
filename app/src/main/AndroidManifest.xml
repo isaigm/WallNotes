@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/appicon"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:requestLegacyExternalStorage="true"
@@ -24,7 +24,6 @@
             android:name="android.support.FILE_PROVIDER_PATHS"
             android:resource="@xml/filepaths"/>
         </provider>
-
         <activity android:name=".EditNoteActivity" android:windowSoftInputMode="stateHidden" />
         <activity
             android:name=".MainActivity"
@@ -35,6 +34,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".PresentationActivity" />
+        <receiver android:name=".NotifierAlarm"/>
     </application>
 
 </manifest>

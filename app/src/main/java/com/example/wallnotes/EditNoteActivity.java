@@ -5,7 +5,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
+
 import android.Manifest;
+import android.app.AlarmManager;
+import android.app.DatePickerDialog;
+import android.app.PendingIntent;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -23,8 +28,13 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.bottomappbar.BottomAppBar;
 import java.io.File;
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
+import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
 import static java.text.DateFormat.getDateInstance;
 
 public class EditNoteActivity extends AppCompatActivity {
@@ -38,6 +48,7 @@ public class EditNoteActivity extends AppCompatActivity {
     private Note mCurrNote;
     private String mImgUri = null;
     private String mPhotoPath = null;
+    private NoteRepository mNoteRepository;
     public void loadImage(String uri)
     {
         Glide.with(this)
@@ -55,6 +66,7 @@ public class EditNoteActivity extends AppCompatActivity {
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_baseline_arrow_back_24);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         BottomAppBar bottomAppBar = findViewById(R.id.bottom_app_bar);
+        mNoteRepository = new NoteRepository(getApplication());
         mTitle = findViewById(R.id.title);
         mContent = findViewById(R.id.content);
         mImageView = findViewById(R.id.image);
@@ -79,16 +91,8 @@ public class EditNoteActivity extends AppCompatActivity {
             if(id == R.id.delete){
                 if(mUpdate)
                 {
-                    String title = mTitle.getText().toString();
-                    String content = mContent.getText().toString();
-                    Intent intent = new Intent("DATA");
-                    intent.putExtra("uid", mCurrNote.getUid());
-                    intent.putExtra("title", title);
-                    intent.putExtra("content", content);
-                    intent.putExtra("must_delete", true);
-                    intent.putExtra("img_uri", mImgUri);
-                    intent.putExtra("created_at", mCurrNote.getCreatedAt());
-                    sendBroadcast(intent);
+                    mCurrNote.setGoingToBeDeleted(true);
+                    mNoteRepository.delete(mCurrNote);
                     finish();
                 }
             }else if(id == R.id.add_img){
@@ -130,6 +134,39 @@ public class EditNoteActivity extends AppCompatActivity {
     }
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId() == R.id.remind) {
+            if(mCurrNote != null){
+                final Calendar newCalender = Calendar.getInstance();
+                DatePickerDialog dialog = new DatePickerDialog(EditNoteActivity.this, (view, year, month, dayOfMonth) -> {
+                    final Calendar newDate = Calendar.getInstance();
+                    Calendar newTime = Calendar.getInstance();
+                    TimePickerDialog time = new TimePickerDialog(EditNoteActivity.this, (view1, hourOfDay, minute) -> {
+                        newDate.set(year,month,dayOfMonth,hourOfDay,minute,0);
+                        Calendar tem = Calendar.getInstance();
+                        if(newDate.getTimeInMillis() - tem.getTimeInMillis() > 0){
+                            Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
+                            calendar.setTime(newDate.getTime());
+                            calendar.set(Calendar.SECOND, 0);
+                            Intent intent = new Intent(this, NotifierAlarm.class);
+                            intent.putExtra("title", mCurrNote.getTitle());
+                            intent.putExtra("content", mCurrNote.getContent());
+                            intent.putExtra("id", mCurrNote.getUid());
+                            PendingIntent intent1 = PendingIntent.getBroadcast(this, mCurrNote.getUid(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                            AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
+                            alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), intent1);
+                            Toast.makeText(this,"Recordatorio agregado",Toast.LENGTH_SHORT).show();
+                        }else{
+                            Toast.makeText(EditNoteActivity.this,"Tiempo inválido",Toast.LENGTH_SHORT).show();
+                        }
+                    },newTime.get(Calendar.HOUR_OF_DAY),newTime.get(Calendar.MINUTE),true);
+                    time.show();
+                },newCalender.get(Calendar.YEAR),newCalender.get(Calendar.MONTH),newCalender.get(Calendar.DAY_OF_MONTH));
+                dialog.getDatePicker().setMinDate(System.currentTimeMillis());
+                dialog.show();
+            }else{
+                Toast.makeText(this,"Necesitas agregar esta nota primero",Toast.LENGTH_SHORT).show();
+            }
+        }
         return super.onOptionsItemSelected(item);
     }
     @Override
@@ -137,10 +174,7 @@ public class EditNoteActivity extends AppCompatActivity {
         String title = mTitle.getText().toString();
         String content = mContent.getText().toString();
         if(title.length() > 0){
-            Intent intent = new Intent("DATA");
-            if(mUpdate){
-                intent.putExtra("uid", mCurrNote.getUid());
-            }
+            Note note = new Note(title, content, null);
             if(mPhotoPath != null)
             {
                 Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
@@ -150,12 +184,15 @@ public class EditNoteActivity extends AppCompatActivity {
                 sendBroadcast(mediaScanIntent);
                 mImgUri = contentUri.toString();
             }
-            intent.putExtra("title", title);
-            intent.putExtra("content", content);
-            intent.putExtra("must_update_note", mUpdate);
-            intent.putExtra("img_uri", mImgUri);
-            intent.putExtra("created_at", mCurrNote == null ? null : mCurrNote.getCreatedAt());
-            sendBroadcast(intent);
+            if(mUpdate){
+                mCurrNote.setContent(content);
+                mCurrNote.setTitle(title);
+                mCurrNote.setImgUri(mImgUri);
+                mNoteRepository.update(mCurrNote);
+            }else{
+                note.setImgUri(mImgUri);
+                mNoteRepository.addNote(note);
+            }
         }
         finish();
         return super.onSupportNavigateUp();

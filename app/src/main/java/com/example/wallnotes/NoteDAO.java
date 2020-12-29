@@ -25,7 +25,7 @@ public interface NoteDAO {
     @Update
     void update(Note note);
 
-    @Query("SELECT * FROM notes WHERE title LIKE  :text")
+    @Query("SELECT * FROM notes WHERE title LIKE :text AND NOT is_going_to_be_deleted")
     LiveData<List<Note>> getSearchResults(String text);
 
     @Query("SELECT * FROM notes WHERE is_going_to_be_deleted")

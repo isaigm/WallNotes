@@ -1,9 +1,6 @@
 package com.example.wallnotes.ui.notes;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,24 +21,19 @@ import com.example.wallnotes.Adapter;
 import com.example.wallnotes.Note;
 import com.example.wallnotes.NoteViewModel;
 import com.example.wallnotes.R;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 public class NoteFragment extends Fragment{
 
     private NoteViewModel mNoteViewModel;
-    private BroadcastReceiver mBroadcastReceiver;
     private RecyclerView.AdapterDataObserver mObserver;
     private Adapter mAdapter;
     private boolean mUseLinearLayout = true;
     private RecyclerView mRecyclerview;
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        mNoteViewModel = new ViewModelProvider(this).get(NoteViewModel.class);
+        mNoteViewModel = new ViewModelProvider(getActivity()).get(NoteViewModel.class);
         View root = inflater.inflate(R.layout.fragment_note, container, false);
         mRecyclerview = root.findViewById(R.id.recycler_view);
         mRecyclerview.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -63,36 +55,6 @@ public class NoteFragment extends Fragment{
         };
         mAdapter.registerAdapterDataObserver(mObserver);
         setHasOptionsMenu(true);
-        IntentFilter filter = new IntentFilter("DATA");
-        mBroadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if(intent != null){
-                    boolean mustUpdateNote = intent.getBooleanExtra("must_update_note", false);
-                    boolean mustDeleteNote = intent.getBooleanExtra("must_delete", false);
-                    String imgUri = intent.getStringExtra("img_uri");
-                    Note note = new Note(intent.getStringExtra("title"), intent.getStringExtra("content"), null);
-                    note.setCreatedAt((Date) intent.getSerializableExtra("created_at"));
-                    if(imgUri != null){
-                        note.setImgUri(imgUri);
-                    }
-                    if(mustUpdateNote){
-                        note.setUid(intent.getIntExtra("uid", 0));
-                        mNoteViewModel.update(note);
-                    }else if (mustDeleteNote){
-                        note.setUid(intent.getIntExtra("uid", 0));
-                        note.setGoingToBeDeleted(true);
-                        mNoteViewModel.update(note);
-                    }else {
-                        DateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss", Locale.US);
-                        Date currDate = new Date();
-                        note.setCreatedAt(currDate);
-                        mNoteViewModel.addNote(note);
-                    }
-                }
-            }
-        };
-        requireActivity().registerReceiver(mBroadcastReceiver, filter);
         return root;
     }
     void getNotesFromDb(String text){
@@ -148,10 +110,6 @@ public class NoteFragment extends Fragment{
         super.onDestroy();
         if(mAdapter != null && mObserver != null){
             mAdapter.unregisterAdapterDataObserver(mObserver);
-        }
-        if(mBroadcastReceiver != null)
-        {
-            requireActivity().unregisterReceiver(mBroadcastReceiver);
         }
     }
     private void runLayoutAnimation(final RecyclerView recyclerView) {

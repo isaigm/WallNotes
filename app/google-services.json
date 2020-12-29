@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "348586704610",
+    "firebase_url": "https://wallnotes-3249c.firebaseio.com",
+    "project_id": "wallnotes-3249c",
+    "storage_bucket": "wallnotes-3249c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:348586704610:android:2dc71da2198e190191a8bb",
+        "android_client_info": {
+          "package_name": "com.example.wallnotes"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "348586704610-ebtf3mvr48l1isjj0evf167lcbckcaa1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcun8v7LoKTbJsM4VQoGgcE-H6RnQE_EY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "348586704610-ebtf3mvr48l1isjj0evf167lcbckcaa1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

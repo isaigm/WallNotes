@@ -7,9 +7,9 @@ import androidx.lifecycle.LiveData;
 import java.util.List;
 
 public class NoteViewModel extends AndroidViewModel {
-    private NoteRepository noteRepository;
-    private LiveData<List<Note>> mCurrNotes;
-    private LiveData<List<Note>> mNotesToBeDeleted;
+    private final NoteRepository noteRepository;
+    private final LiveData<List<Note>> mCurrNotes;
+    private final LiveData<List<Note>> mNotesToBeDeleted;
 
     public NoteViewModel(@NonNull Application application) {
         super(application);

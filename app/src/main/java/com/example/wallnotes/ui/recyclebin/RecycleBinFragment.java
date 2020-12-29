@@ -27,18 +27,16 @@ import java.util.List;
 public class RecycleBinFragment extends Fragment {
 
     private RecycleBinAdapter mRecycleBinAdapter;
-    private RecyclerView mRecyclerview;
     private NoteViewModel mNoteViewModel;
     private RecyclerView.AdapterDataObserver mObserver;
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-
         View root = inflater.inflate(R.layout.fragment_recyclebin, container, false);
-        mNoteViewModel = new ViewModelProvider(this).get(NoteViewModel.class);
-        mRecyclerview = root.findViewById(R.id.bin_recycler_view);
+        mNoteViewModel = new ViewModelProvider(getActivity()).get(NoteViewModel.class);
+        RecyclerView mRecyclerview = root.findViewById(R.id.bin_recycler_view);
         mRecyclerview.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
         List<Note> data = new ArrayList<>();
-        mRecycleBinAdapter = new RecycleBinAdapter(data);
+        mRecycleBinAdapter = new RecycleBinAdapter(data, getActivity(), mNoteViewModel);
         mNoteViewModel.getNotesToBeDeleted().observe(getViewLifecycleOwner(), mRecycleBinAdapter::setmData);
         mRecyclerview.setAdapter(mRecycleBinAdapter);
         final TextView tv = root.findViewById(R.id.text_slideshow);
@@ -56,6 +54,21 @@ public class RecycleBinFragment extends Fragment {
         setHasOptionsMenu(true);
         mRecycleBinAdapter.registerAdapterDataObserver(mObserver);
         return root;
+    }
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId() == R.id.delete_notes)
+        {
+            List<Note> data = mRecycleBinAdapter.getmData();
+            if(data != null)
+            {
+                for(Note n: data)
+                {
+                    mNoteViewModel.delete(n);
+                }
+            }
+        }
+        return super.onOptionsItemSelected(item);
     }
     public void onPrepareOptionsMenu(Menu menu) {
         menu.findItem(R.id.search).setVisible(false);

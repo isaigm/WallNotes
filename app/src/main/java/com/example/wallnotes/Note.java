@@ -18,9 +18,12 @@ public class Note {
     @ColumnInfo(name = "content")
     private String content;
     @ColumnInfo(name = "uriImg")
-    private String imgUri = null;
+    private String imgUri;
     @ColumnInfo(name = "is_going_to_be_deleted")
     private boolean isGoingToBeDeleted;
+    @ColumnInfo(name = "remind_date")
+    @TypeConverters({Converters.class})
+    private Date remindDate;
     public int getUid() {
         return uid;
     }
@@ -57,11 +60,18 @@ public class Note {
     public void setGoingToBeDeleted(boolean goingToBeDeleted) {
         isGoingToBeDeleted = goingToBeDeleted;
     }
+    public Date getRemindDate() {
+        return remindDate;
+    }
+    public void setRemindDate(Date remindDate) {
+        this.remindDate = remindDate;
+    }
     public Note(String title, String content, String imgUri){
         this.title = title;
         this.content = content;
         this.imgUri = imgUri;
         this.createdAt = null;
         this.isGoingToBeDeleted = false;
+        this.remindDate = null;
     }
 }
