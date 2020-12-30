@@ -5,11 +5,21 @@
     <color name="purple_700">#FF3700B3</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="light_blue_600">#FF039BE5</color>
     <color name="light_blue_900">#FF01579B</color>
     <color name="light_blue_A200">#FF40C4FF</color>
     <color name="light_blue_A400">#FF00B0FF</color>
     <color name="black_overlay">#66000000</color>
+    <color name="persian_red">#D32F2F</color><!--colorPrimary-->
+    <color name="sangria">#9A0007</color><!--colorPrimaryVariant-->
+
+    <!-- dark theme color palette !-->
+    <color name="tonys_pink">#EF9A9A</color><!--colorPrimary-->
+    <color name="turkish_rose">#BA6B6C</color><!--colorPrimaryVariant-->
+
+    <!-- used in both the light and dark theme-->
+    <color name="chardonnay">#FFCC80</color><!--colorSecondary-->
+    <color name="black">@android:color/black</color><!--colorOnSecondary-->
+    <color name="portafino">#FFFFB0</color><!--colorSecondaryVariant-->
 </resources>

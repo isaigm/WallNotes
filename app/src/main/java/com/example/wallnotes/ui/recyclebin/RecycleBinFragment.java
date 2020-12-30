@@ -8,19 +8,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
-
 import com.example.wallnotes.Note;
 import com.example.wallnotes.NoteViewModel;
 import com.example.wallnotes.R;
 import com.example.wallnotes.RecycleBinAdapter;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,14 +55,22 @@ public class RecycleBinFragment extends Fragment {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == R.id.delete_notes)
         {
-            List<Note> data = mRecycleBinAdapter.getmData();
-            if(data != null)
-            {
-                for(Note n: data)
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setTitle("Alerta");
+            builder.setMessage("Todas las notas se van a eliminar permanentemente");
+            builder.setNegativeButton("Cancelar", null);
+            builder.setPositiveButton("Aceptar", (dialog, which) -> {
+                List<Note> data = mRecycleBinAdapter.getmData();
+                if(data != null)
                 {
-                    mNoteViewModel.delete(n);
+                    for(Note n: data)
+                    {
+                        mNoteViewModel.delete(n);
+                    }
                 }
-            }
+            });
+            AlertDialog dialog = builder.create();
+            dialog.show();
         }
         return super.onOptionsItemSelected(item);
     }

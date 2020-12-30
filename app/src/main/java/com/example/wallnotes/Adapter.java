@@ -113,6 +113,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
                 intent.putExtra("uid", note.getUid());
                 intent.putExtra("img_uri", note.getImgUri());
                 intent.putExtra("created_at", note.getCreatedAt());
+                intent.putExtra("remind_date", note.getRemindDate());
                 mActivity.startActivity(intent);
                 mActivity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
             }

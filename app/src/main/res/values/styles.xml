@@ -8,9 +8,30 @@
         <item name="android:background">@color/black_overlay</item>
         <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
     </style>
-    <style name="JODER" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="claro" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="windowActionModeOverlay">true</item>
         <item name="android:actionModeBackground">@color/purple_500</item>
         <item name="actionModeBackground">@color/purple_500</item>
+    </style>
+    <style name="oscuro" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="windowActionModeOverlay">true</item>
+        <item name="colorPrimary">@color/persian_red</item>
+        <item name="colorPrimaryVariant">@color/sangria</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/chardonnay</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorSecondaryVariant">@color/portafino</item>
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="android:actionModeBackground">@color/persian_red</item>
+        <item name="actionModeBackground">@color/persian_red</item>
+        <item name="android:editTextColor">#ffffff</item>
+        <item name="android:textColorPrimary">#ffffff</item>
+        <item name="android:textColorSecondary">#ffffff</item>
+        <item name="android:textColorTertiary">#ffffff</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColorPrimaryInverse">#ffffff</item>
+        <item name="android:textColorSecondaryInverse">#ffffff</item>
+        <item name="android:textColorTertiaryInverse">#ffffff</item>
+
     </style>
 </resources>

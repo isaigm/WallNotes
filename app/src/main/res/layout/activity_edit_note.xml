@@ -61,13 +61,28 @@
                     android:layout_marginLeft="10dp"
                     android:layout_marginRight="10dp"
                     />
+              <com.google.android.material.card.MaterialCardView
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/card_vieww"
+                  app:cardElevation="4dp"
+                  android:layout_marginStart="10dp"
+                  app:cardCornerRadius="4dp"
+                  android:visibility="gone"
+                  app:cardUseCompatPadding="true">
+                  <TextView
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:id="@+id/remind_date"
+                      android:layout_margin="2dp"
+                      android:textSize="15sp"/>
+              </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </ScrollView>
     </LinearLayout>
     <androidx.coordinatorlayout.widget.CoordinatorLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
         <com.google.android.material.bottomappbar.BottomAppBar
             android:id="@+id/bottom_app_bar"
             style="@style/Widget.MaterialComponents.BottomAppBar.PrimarySurface"

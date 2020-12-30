@@ -28,7 +28,7 @@ public class NotifierAlarm extends BroadcastReceiver {
         TaskStackBuilder taskStackBuilder = TaskStackBuilder.create(context);
         taskStackBuilder.addParentStack(EditNoteActivity.class);
         taskStackBuilder.addNextIntent(intent1);
-        PendingIntent intent2 = taskStackBuilder.getPendingIntent(1,PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = taskStackBuilder.getPendingIntent(1, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
         NotificationChannel channel = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -38,7 +38,7 @@ public class NotifierAlarm extends BroadcastReceiver {
                 .setContentText(title)
                 .setAutoCancel(true)
                 .setSound(alarmSound).setSmallIcon(R.mipmap.ic_launcher_round)
-                .setContentIntent(intent2)
+                .setContentIntent(pendingIntent)
                 .setChannelId("my_channel_01")
                 .build();
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);

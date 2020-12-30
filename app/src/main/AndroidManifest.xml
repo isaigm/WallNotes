@@ -14,7 +14,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
-        android:theme="@style/JODER">
+        android:theme="@style/claro">
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.example.wallnotes.fileprovider"

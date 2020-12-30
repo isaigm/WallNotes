@@ -1,6 +1,7 @@
 package com.example.wallnotes.ui.notes;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -14,6 +15,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
@@ -32,16 +34,25 @@ public class NoteFragment extends Fragment{
     private Adapter mAdapter;
     private boolean mUseLinearLayout = true;
     private RecyclerView mRecyclerview;
+    private boolean addAtEnd = false;
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mNoteViewModel = new ViewModelProvider(getActivity()).get(NoteViewModel.class);
         View root = inflater.inflate(R.layout.fragment_note, container, false);
         mRecyclerview = root.findViewById(R.id.recycler_view);
-        mRecyclerview.setLayoutManager(new LinearLayoutManager(getActivity()));
         List<Note> data = new ArrayList<>();
         mAdapter = new Adapter(data, getActivity(), mNoteViewModel);
         mNoteViewModel.getCurrNotes().observe(getViewLifecycleOwner(), mAdapter::setmData);
         mRecyclerview.setAdapter(mAdapter);
         final TextView textView = root.findViewById(R.id.text_home);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        addAtEnd = sharedPreferences.getBoolean("add_at_end", false);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
+        if(addAtEnd)
+        {
+            linearLayoutManager.setReverseLayout(true);
+            linearLayoutManager.setStackFromEnd(true);
+        }
+        mRecyclerview.setLayoutManager(linearLayoutManager);
         mObserver = new RecyclerView.AdapterDataObserver() {
             @Override
             public void onChanged() {
@@ -57,7 +68,7 @@ public class NoteFragment extends Fragment{
         setHasOptionsMenu(true);
         return root;
     }
-    void getNotesFromDb(String text){
+    void getNotesFromDb(String text) {
         mNoteViewModel.search(text).observe(this, notes -> {
             mAdapter.setmData(notes);
         });
@@ -67,14 +78,19 @@ public class NoteFragment extends Fragment{
         if(item.getItemId() == R.id.change_layout)
         {
             mUseLinearLayout = !mUseLinearLayout;
-            if(mUseLinearLayout)
-            {
+            if(mUseLinearLayout) {
                 item.setIcon(R.drawable.ic_baseline_view_list_24);
-                mRecyclerview.setLayoutManager(new LinearLayoutManager(getActivity()));
+                LinearLayoutManager linearLayout = new LinearLayoutManager(getActivity());
+                if(addAtEnd)
+                {
+                    linearLayout.setReverseLayout(true);
+                    linearLayout.setStackFromEnd(true);
+                }
+                mRecyclerview.setLayoutManager(linearLayout);
 
             }else{
                 item.setIcon(R.drawable.ic_baseline_view_grid);
-                mRecyclerview.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
+                mRecyclerview.setLayoutManager( new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
             }
             mRecyclerview.setAdapter(mAdapter);
             runLayoutAnimation(mRecyclerview);

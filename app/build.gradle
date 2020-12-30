@@ -37,10 +37,6 @@ dependencies {
     annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
     implementation "androidx.room:room-runtime:$room_version"
     annotationProcessor "androidx.room:room-compiler:$room_version"
-    // optional - RxJava support for Room
-    implementation "androidx.room:room-rxjava2:$room_version"
-    // optional - Guava support for Room, including Optional and ListenableFuture
-    implementation "androidx.room:room-guava:$room_version"
     // optional - Test helpers
     testImplementation "androidx.room:room-testing:$room_version"
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
