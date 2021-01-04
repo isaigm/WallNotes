@@ -6,7 +6,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -29,7 +28,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import com.bumptech.glide.Glide;
-import com.deskode.recorddialog.RecordDialog;
 import com.google.android.material.bottomappbar.BottomAppBar;
 import java.io.File;
 import java.io.IOException;
@@ -139,10 +137,11 @@ public class EditNoteActivity extends AppCompatActivity {
                 }
             }else if(id == R.id.add_audio)
             {
-                if(ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED){
+                if(ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
+                        ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
                     openRecordDialog();
                 }else{
-                    ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO);
+                    ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_RECORD_AUDIO);
                 }
             }
             return false;
@@ -333,12 +332,9 @@ public class EditNoteActivity extends AppCompatActivity {
     }
     void openRecordDialog()
     {
-
         RecordDialog recordDialog = RecordDialog.newInstance("Record Audio");
-        recordDialog.setMessage("Press for record");
-        recordDialog.show(getFragmentManager(),"TAG");
-        recordDialog.setPositiveButton("Save", path -> {
-
-        });
+        recordDialog.setMessage("Presiona para grabar");
+        recordDialog.show(getSupportFragmentManager(), "TAG");
+        recordDialog.setPositiveButton("Guardar", System.out::println);
     }
 }
