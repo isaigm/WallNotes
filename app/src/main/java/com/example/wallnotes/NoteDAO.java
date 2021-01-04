@@ -34,4 +34,9 @@ public interface NoteDAO {
     @Query("SELECT * FROM notes WHERE NOT is_going_to_be_deleted")
     LiveData<List<Note>> getCurrentNotes();
 
+    @Query("SELECT * FROM notes WHERE NOT is_going_to_be_deleted AND uid = :id")
+    Note getCurrNoteById(int id);
+
+    @Query("SELECT * FROM notes WHERE remind_date IS NOT NULL")
+    LiveData<List<Note>> getReminders();
 }

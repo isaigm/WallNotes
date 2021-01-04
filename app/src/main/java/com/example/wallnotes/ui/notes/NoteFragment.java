@@ -19,7 +19,7 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
-import com.example.wallnotes.Adapter;
+import com.example.wallnotes.NoteAdapter;
 import com.example.wallnotes.Note;
 import com.example.wallnotes.NoteViewModel;
 import com.example.wallnotes.R;
@@ -31,20 +31,20 @@ public class NoteFragment extends Fragment{
 
     private NoteViewModel mNoteViewModel;
     private RecyclerView.AdapterDataObserver mObserver;
-    private Adapter mAdapter;
+    private NoteAdapter mAdapter;
     private boolean mUseLinearLayout = true;
     private RecyclerView mRecyclerview;
     private boolean addAtEnd = false;
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        mNoteViewModel = new ViewModelProvider(getActivity()).get(NoteViewModel.class);
+        mNoteViewModel = new ViewModelProvider(this).get(NoteViewModel.class);
         View root = inflater.inflate(R.layout.fragment_note, container, false);
         mRecyclerview = root.findViewById(R.id.recycler_view);
         List<Note> data = new ArrayList<>();
-        mAdapter = new Adapter(data, getActivity(), mNoteViewModel);
+        mAdapter = new NoteAdapter(data, getActivity(), mNoteViewModel);
         mNoteViewModel.getCurrNotes().observe(getViewLifecycleOwner(), mAdapter::setmData);
         mRecyclerview.setAdapter(mAdapter);
         final TextView textView = root.findViewById(R.id.text_home);
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity());
         addAtEnd = sharedPreferences.getBoolean("add_at_end", false);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
         if(addAtEnd)

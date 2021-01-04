@@ -1,5 +1,6 @@
 package com.example.wallnotes;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
@@ -10,7 +11,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -21,10 +21,12 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
+public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
     private List<Note> mData;
     private final List<Note> mSelectedNotes = new ArrayList<>();
     private final Activity mActivity;
@@ -108,12 +110,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
             }else {
                 Note n = mData.get(holder.getAdapterPosition());
                 Intent intent = new Intent(mActivity, EditNoteActivity.class);
-                intent.putExtra("title", note.getTitle());
-                intent.putExtra("content", note.getContent());
                 intent.putExtra("uid", note.getUid());
-                intent.putExtra("img_uri", note.getImgUri());
-                intent.putExtra("created_at", note.getCreatedAt());
-                intent.putExtra("remind_date", note.getRemindDate());
                 mActivity.startActivity(intent);
                 mActivity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
             }
@@ -152,7 +149,7 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
             mData = newData;
         }
     }
-    public Adapter(List<Note> data, Activity activity, NoteViewModel noteViewModel){
+    public NoteAdapter(List<Note> data, Activity activity, NoteViewModel noteViewModel){
         this.mData = data;
         this.mActivity = activity;
         this.mNoteViewModel = noteViewModel;
@@ -162,29 +159,26 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
         return mData.size();
     }
     static public class ViewHolder extends RecyclerView.ViewHolder {
-        private final TextView text;
+        private final TextView title;
+        private final TextView content;
+        private final TextView remindDate;
         private final ImageView imageView;
         private final CardView cardView;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            text = itemView.findViewById(R.id.text);
+            title = itemView.findViewById(R.id.note_title);
+            content = itemView.findViewById(R.id.note_content);
             imageView = itemView.findViewById(R.id.img);
             cardView = itemView.findViewById(R.id.cv);
-            ViewTreeObserver observer = text.getViewTreeObserver();
-            observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    int maxLines = (int) text.getHeight()
-                            / text.getLineHeight();
-                    text.setMaxLines(maxLines);
-                    text.getViewTreeObserver().removeOnGlobalLayoutListener(
-                            this);
-                }
-            });
+            remindDate = itemView.findViewById(R.id.remind_date);
         }
         public void setData(Note note) {
-            String t = note.getTitle() + "\n" + note.getContent();
-            text.setText(t);
+            if(note.getRemindDate() != null){
+                @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFor = new SimpleDateFormat("dd/MM/yyyy hh:mm");
+                remindDate.setText(dateFor.format(note.getRemindDate()));
+            }
+            title.setText(note.getTitle());
+            content.setText(note.getContent());
         }
     }
 }

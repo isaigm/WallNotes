@@ -6,8 +6,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.app.PendingIntent;
@@ -21,13 +23,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import com.bumptech.glide.Glide;
+import com.deskode.recorddialog.RecordDialog;
 import com.google.android.material.bottomappbar.BottomAppBar;
 import java.io.File;
 import java.io.IOException;
@@ -35,12 +37,12 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
-import java.util.TimeZone;
 import static java.text.DateFormat.getDateInstance;
 
 public class EditNoteActivity extends AppCompatActivity {
     private final int REQUEST_IMAGE = 0;
     private final int REQUEST_CAMERA = 1;
+    private final int REQUEST_RECORD_AUDIO = 2;
     private TextView mTitle;
     private TextView mContent;
     private ImageView mImageView;
@@ -52,54 +54,9 @@ public class EditNoteActivity extends AppCompatActivity {
     private Date mRemindDate = null;
     private TextView mTv = null;
     private CardView mCv = null;
-    public void loadImage(String uri)
-    {
-        Glide.with(this)
-                .load(uri)
-                .error(R.drawable.reload)
-                .into(mImageView);
-    }
-    void cancelAlarm(){
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent myIntent = new Intent(getApplicationContext(), NotifierAlarm.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), mCurrNote.getUid(), myIntent, 0);
-        alarmManager.cancel(pendingIntent);
-    }
-    void createAlarm(){
-        final Calendar newCalender = Calendar.getInstance();
-        DatePickerDialog dialog = new DatePickerDialog(EditNoteActivity.this, (view, year, month, dayOfMonth) -> {
-            final Calendar newDate = Calendar.getInstance();
-            Calendar newTime = Calendar.getInstance();
-            TimePickerDialog time = new TimePickerDialog(EditNoteActivity.this, (view1, hourOfDay, minute) -> {
-                newDate.set(year,month,dayOfMonth,hourOfDay,minute,0);
-                Calendar tem = Calendar.getInstance();
-                if(newDate.getTimeInMillis() - tem.getTimeInMillis() > 0){
-                    Calendar calendar = Calendar.getInstance(TimeZone.getDefault());
-                    calendar.setTime(newDate.getTime());
-                    calendar.set(Calendar.SECOND, 0);
-                    Intent intent = new Intent(this, NotifierAlarm.class);
-                    intent.putExtra("title", mCurrNote.getTitle());
-                    intent.putExtra("content", mCurrNote.getContent());
-                    intent.putExtra("id", mCurrNote.getUid());
-                    PendingIntent intent1 = PendingIntent.getBroadcast(this, mCurrNote.getUid(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
-                    AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
-                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), intent1);
-                    mRemindDate = calendar.getTime();
-                    setRemindDate();
-                    Utils.showMessage(this, "Recordatorio agregado");
-                }else{
-                    Utils.showMessage(this, "Tiempo inválido");
-                }
-            },newTime.get(Calendar.HOUR_OF_DAY),newTime.get(Calendar.MINUTE),true);
-            time.show();
-        },newCalender.get(Calendar.YEAR),newCalender.get(Calendar.MONTH),newCalender.get(Calendar.DAY_OF_MONTH));
-        dialog.getDatePicker().setMinDate(System.currentTimeMillis());
-        dialog.show();
-    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d("EVENT", "onCreate");
         setContentView(R.layout.activity_edit_note);
         Toolbar toolbar = findViewById(R.id.note_toolbar);
         setSupportActionBar(toolbar);
@@ -125,12 +82,8 @@ public class EditNoteActivity extends AppCompatActivity {
         }
         Bundle data = getIntent().getExtras();
         if(data != null){
-            mCurrNote = new Note(data.getString("title"), data.getString("content"), null);
-            mCurrNote.setUid(data.getInt("uid"));
-            mCurrNote.setImgUri(data.getString("img_uri"));
-            mCurrNote.setCreatedAt((Date) data.getSerializable("created_at"));
-            mRemindDate = (Date) data.getSerializable("remind_date");
-            mCurrNote.setRemindDate(mRemindDate);
+            mCurrNote = mNoteRepository.getById(data.getInt("uid"));
+            mRemindDate = mCurrNote.getRemindDate();
             mTitle.setText(mCurrNote.getTitle());
             mContent.setText(mCurrNote.getContent());
             if(mCurrNote.getImgUri() != null)
@@ -150,14 +103,16 @@ public class EditNoteActivity extends AppCompatActivity {
                 if(mUpdate)
                 {
                     mCurrNote.setGoingToBeDeleted(true);
-                    mNoteRepository.delete(mCurrNote);
+                    mNoteRepository.update(mCurrNote);
                     finish();
                 }
             }else if(id == R.id.add_img){
-                Intent intent = new Intent(Intent.ACTION_PICK);
-                intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/");
-                mPhotoPath = null;
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.setType("image/*");
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(intent, REQUEST_IMAGE);
+                mPhotoPath = null;
+
             }else if(id == R.id.take_photo){
                 if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
                     if(ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED){
@@ -182,8 +137,24 @@ public class EditNoteActivity extends AppCompatActivity {
                 }else {
                     Utils.showMessage(this, "Acción denegada");
                 }
+            }else if(id == R.id.add_audio)
+            {
+                if(ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED){
+                    openRecordDialog();
+                }else{
+                    ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO);
+                }
             }
             return false;
+        });
+        mImageView.setOnClickListener(v -> {
+            if(mImgUri != null)
+            {
+                Intent intent = new Intent();
+                intent.setAction(Intent.ACTION_VIEW);
+                intent.setDataAndType(Uri.parse(mImgUri), "image/");
+                startActivity(intent);
+            }
         });
     }
     @Override
@@ -194,24 +165,23 @@ public class EditNoteActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == REQUEST_IMAGE){
-            if(resultCode == RESULT_OK && data != null){
-                mImgUri = data.getDataString();
-                loadImage(mImgUri);
-            }
-        }else if(requestCode == REQUEST_CAMERA){
-            if(resultCode == RESULT_OK)
-            {
-                loadImage(mPhotoPath);
-                mImgUri = mPhotoPath;
-            }
+        switch (requestCode){
+            case REQUEST_IMAGE:
+                if(resultCode == RESULT_OK && data != null){
+                    mImgUri = data.getDataString();
+                    loadImage(mImgUri);
+                }
+                break;
+            case REQUEST_CAMERA:
+                if(resultCode == RESULT_OK)
+                {
+                    loadImage(mPhotoPath);
+                    mImgUri = mPhotoPath;
+                }
+                break;
+            default:
+                break;
         }
-    }
-    public void setRemindDate(){
-        SimpleDateFormat dateFor = new SimpleDateFormat("dd/MM/yyyy hh:mm");
-        String t = "Recordatorio: " + dateFor.format(mRemindDate);
-        mTv.setText(t);
-        mCv.setVisibility(View.VISIBLE);
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -222,12 +192,48 @@ public class EditNoteActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == R.id.remind) {
             if(mCurrNote != null){
-              createAlarm();
+                if(mRemindDate == null)
+                {
+                    createAlarm();
+                }else {
+                    Utils.showMessage(this, "Esta nota ya tiene un recordatorio");
+                }
             }else{
                 Utils.showMessage(this, "Debes agregar esta nota primero");
             }
         }
         return super.onOptionsItemSelected(item);
+    }
+    @Override
+    public boolean onSupportNavigateUp() {
+        updateOrSaveNote();
+        finish();
+        return super.onSupportNavigateUp();
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode == REQUEST_CAMERA){
+            if(permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            {
+                openCamera();
+            }else{
+                Utils.showMessage(this, "Debes aceptar los permisos");
+            }
+        }else if(requestCode == REQUEST_RECORD_AUDIO)
+        {
+            if(permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            {
+               openRecordDialog();
+            }else{
+                Utils.showMessage(this, "Debes aceptar los permisos");
+            }
+        }
+    }
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        updateOrSaveNote();
     }
     void updateOrSaveNote()
     {
@@ -235,7 +241,6 @@ public class EditNoteActivity extends AppCompatActivity {
         String content = mContent.getText().toString();
         if(title.length() > 0){
             Note note = new Note(title, content, null);
-            note.setRemindDate(mRemindDate);
             if(mPhotoPath != null)
             {
                 Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
@@ -257,12 +262,6 @@ public class EditNoteActivity extends AppCompatActivity {
             }
         }
     }
-    @Override
-    public boolean onSupportNavigateUp() {
-        updateOrSaveNote();
-        finish();
-        return super.onSupportNavigateUp();
-    }
     public void openCamera(){
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         String timeStamp = getDateInstance().format(new Date());
@@ -282,21 +281,64 @@ public class EditNoteActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(requestCode == REQUEST_CAMERA){
-            if(permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            {
-                openCamera();
-            }else{
-                Utils.showMessage(this, "Debes aceptar los permisos");
-            }
-        }
+    public void setRemindDate(){
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFor = new SimpleDateFormat("dd/MM/yyyy hh:mm");
+        String t = "Recordatorio: " + dateFor.format(mRemindDate);
+        mTv.setText(t);
+        mCv.setVisibility(View.VISIBLE);
     }
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        updateOrSaveNote();
+    public void loadImage(String uri)
+    {
+        Glide.with(this)
+                .load(uri)
+                .error(R.drawable.reload)
+                .into(mImageView);
+    }
+    void cancelAlarm(){
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent myIntent = new Intent(getApplicationContext(), NotifierAlarm.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), mCurrNote.getUid(), myIntent, 0);
+        alarmManager.cancel(pendingIntent);
+        mRemindDate = null;
+    }
+    void createAlarm(){
+        final Calendar newCalender = Calendar.getInstance();
+        DatePickerDialog dialog = new DatePickerDialog(EditNoteActivity.this, (view, year, month, dayOfMonth) -> {
+            final Calendar newDate = Calendar.getInstance();
+            Calendar newTime = Calendar.getInstance();
+            TimePickerDialog time = new TimePickerDialog(EditNoteActivity.this, (view1, hourOfDay, minute) -> {
+                newDate.set(year,month,dayOfMonth,hourOfDay,minute,0);
+                Calendar tem = Calendar.getInstance();
+                if(newDate.getTimeInMillis() - tem.getTimeInMillis() > 0){
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTime(newDate.getTime());
+                    calendar.set(Calendar.SECOND, 0);
+                    Intent intent = new Intent(this, NotifierAlarm.class);
+                    intent.putExtra("uid", mCurrNote.getUid());
+                    PendingIntent intent1 = PendingIntent.getBroadcast(this, mCurrNote.getUid(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
+                    alarmManager.setExact(AlarmManager.RTC, calendar.getTimeInMillis(), intent1);
+                    mRemindDate = calendar.getTime();
+                    mCurrNote.setRemindDate(mRemindDate);
+                    setRemindDate();
+                    Utils.showMessage(this, "Recordatorio agregado");
+                }else{
+                    Utils.showMessage(this, "Tiempo inválido");
+                }
+            },newTime.get(Calendar.HOUR_OF_DAY),newTime.get(Calendar.MINUTE),true);
+            time.show();
+        },newCalender.get(Calendar.YEAR),newCalender.get(Calendar.MONTH),newCalender.get(Calendar.DAY_OF_MONTH));
+        dialog.getDatePicker().setMinDate(System.currentTimeMillis());
+        dialog.show();
+    }
+    void openRecordDialog()
+    {
+
+        RecordDialog recordDialog = RecordDialog.newInstance("Record Audio");
+        recordDialog.setMessage("Press for record");
+        recordDialog.show(getFragmentManager(),"TAG");
+        recordDialog.setPositiveButton("Save", path -> {
+
+        });
     }
 }

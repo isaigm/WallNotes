@@ -28,14 +28,14 @@ public class RecycleBinFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_recyclebin, container, false);
-        mNoteViewModel = new ViewModelProvider(getActivity()).get(NoteViewModel.class);
+        mNoteViewModel = new ViewModelProvider(this).get(NoteViewModel.class);
         RecyclerView mRecyclerview = root.findViewById(R.id.bin_recycler_view);
         mRecyclerview.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
         List<Note> data = new ArrayList<>();
         mRecycleBinAdapter = new RecycleBinAdapter(data, getActivity(), mNoteViewModel);
         mNoteViewModel.getNotesToBeDeleted().observe(getViewLifecycleOwner(), mRecycleBinAdapter::setmData);
         mRecyclerview.setAdapter(mRecycleBinAdapter);
-        final TextView tv = root.findViewById(R.id.text_slideshow);
+        final TextView tv = root.findViewById(R.id.text_bin);
         mObserver = new RecyclerView.AdapterDataObserver() {
             @Override
             public void onChanged() {

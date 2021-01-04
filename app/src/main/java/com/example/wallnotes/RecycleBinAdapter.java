@@ -9,7 +9,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -147,29 +146,20 @@ public class RecycleBinAdapter extends RecyclerView.Adapter<RecycleBinAdapter.Vi
         this.mNoteViewModel = noteViewModel;
     }
     static public class ViewHolder extends RecyclerView.ViewHolder {
-        private final TextView text;
+        private final TextView title;
+        private final TextView content;
         private final ImageView imageView;
         private final CardView cardView;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            text = itemView.findViewById(R.id.text);
+            title = itemView.findViewById(R.id.note_title);
+            content = itemView.findViewById(R.id.note_content);
             imageView = itemView.findViewById(R.id.img);
             cardView = itemView.findViewById(R.id.cv);
-            ViewTreeObserver observer = text.getViewTreeObserver();
-            observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    int maxLines = (int) text.getHeight()
-                            / text.getLineHeight();
-                    text.setMaxLines(maxLines);
-                    text.getViewTreeObserver().removeOnGlobalLayoutListener(
-                            this);
-                }
-            });
         }
         public void setData(Note note) {
-            String t = note.getTitle() + "\n" + note.getContent();
-            text.setText(t);
+            title.setText(note.getTitle());
+            content.setText(note.getContent());
         }
     }
 }

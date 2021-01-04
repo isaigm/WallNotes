@@ -10,12 +10,14 @@ public class NoteViewModel extends AndroidViewModel {
     private final NoteRepository noteRepository;
     private final LiveData<List<Note>> mCurrNotes;
     private final LiveData<List<Note>> mNotesToBeDeleted;
+    private final LiveData<List<Note>> mReminders;
 
     public NoteViewModel(@NonNull Application application) {
         super(application);
         noteRepository = new NoteRepository(application);
         mCurrNotes = noteRepository.getCurrNotes();
         mNotesToBeDeleted = noteRepository.getNotesToBeDeleted();
+        mReminders = noteRepository.getReminders();
     }
 
     public LiveData<List<Note>> getCurrNotes() {
@@ -24,7 +26,7 @@ public class NoteViewModel extends AndroidViewModel {
     public LiveData<List<Note>> getNotesToBeDeleted() {
         return mNotesToBeDeleted;
     }
-
+    public LiveData<List<Note>> getReminders() { return mReminders; }
     public void addNote(Note note) {
         noteRepository.addNote(note);
     }

@@ -1,91 +1,58 @@
 package com.example.wallnotes;
 
 import android.app.Application;
-import android.os.AsyncTask;
-
+import android.content.Context;
 import androidx.lifecycle.LiveData;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class NoteRepository {
     private final NoteDAO mNoteDao;
-    private final LiveData<List<Note>> mCurrNotes;
-    private final LiveData<List<Note>> mNotesToBeDeleted;
+    private final ExecutorService mExecutor;
     NoteRepository(Application application) {
         AppDatabase db = AppDatabase.getInstance(application);
+        mExecutor = Executors.newSingleThreadExecutor();
         mNoteDao = db.noteDAO();
-        mCurrNotes = mNoteDao.getCurrentNotes();
-        mNotesToBeDeleted = mNoteDao.getNotesToBeDeleted();
+    }
+    NoteRepository(Context context) {
+        AppDatabase db = AppDatabase.getInstance(context);
+        mNoteDao = db.noteDAO();
+        mExecutor = Executors.newSingleThreadExecutor();
     }
     public LiveData<List<Note>> getCurrNotes() {
-        return mCurrNotes;
+        return  mNoteDao.getCurrentNotes();
     }
     public LiveData<List<Note>> getNotesToBeDeleted() {
-        return mNotesToBeDeleted;
+        return mNoteDao.getNotesToBeDeleted();
     }
+    public LiveData<List<Note>> getReminders() { return mNoteDao.getReminders(); }
     public void addNote(Note note)
     {
-        new insertAsyncTask(mNoteDao).execute(note);
+        mExecutor.execute(() -> mNoteDao.insertAll(note));
     }
-    public void update(Note note)
-    {
-        new updateAsyncTask(mNoteDao).execute(note);
+    public void update(Note note){
+        mExecutor.execute(() -> mNoteDao.update(note));
     }
     public void delete(Note note)
     {
-        new deleteAsyncTask(mNoteDao).execute(note);
+        mExecutor.execute(() -> mNoteDao.delete(note));
     }
     public LiveData<List<Note>> search(String text)  {
-        searchAsyncTask asyncTask = new searchAsyncTask(mNoteDao);
-        LiveData<List<Note>> res = null;
         try {
-            res = asyncTask.execute(text).get();
+            return mExecutor.submit(() -> mNoteDao.getSearchResults("%" + text + "%")).get();
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
-        return res;
+        return null;
     }
-    private static class insertAsyncTask extends AsyncTask<Note, Void, Void> {
-        private final NoteDAO mAsyncTaskDao;
-        public insertAsyncTask(NoteDAO dao) {
-            mAsyncTaskDao = dao;
+    public Note getById(int id)  {
+        try {
+            return mExecutor.submit(() -> mNoteDao.getCurrNoteById(id)).get();
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
         }
-        @Override
-        protected Void doInBackground(final Note... params) {
-            mAsyncTaskDao.insertAll(params[0]);
-            return null;
-        }
-    }
-    private static class updateAsyncTask extends AsyncTask<Note, Void, Void> {
-        private final NoteDAO mAsyncTaskDao;
-        public updateAsyncTask(NoteDAO dao) {
-            mAsyncTaskDao = dao;
-        }
-        @Override
-        protected Void doInBackground(final Note... params) {
-            mAsyncTaskDao.update(params[0]);
-            return null;
-        }
-    }
-    private static class deleteAsyncTask extends AsyncTask<Note, Void, Void> {
-        private final NoteDAO mAsyncTaskDao;
-        public deleteAsyncTask(NoteDAO dao) {
-            mAsyncTaskDao = dao;
-        }
-        @Override
-        protected Void doInBackground(final Note... params) {
-            mAsyncTaskDao.delete(params[0]);
-            return null;
-        }
-    }
-    private static class searchAsyncTask extends AsyncTask<String, Void, LiveData<List<Note>>> {
-        private final NoteDAO mAsyncTaskDao;
-        public searchAsyncTask(NoteDAO dao) {
-            mAsyncTaskDao = dao;
-        }
-        @Override
-        protected LiveData<List<Note>> doInBackground(final String... params) {
-            return mAsyncTaskDao.getSearchResults("%" + params[0] + "%");
-        }
+        return null;
     }
 }

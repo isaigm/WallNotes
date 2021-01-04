@@ -12,10 +12,10 @@
         tools:layout="@layout/fragment_note" />
 
     <fragment
-        android:id="@+id/nav_gallery"
-        android:name="com.example.wallnotes.ui.gallery.GalleryFragment"
+        android:id="@+id/nav_reminder"
+        android:name="com.example.wallnotes.ui.reminders.ReminderFragment"
         android:label="@string/menu_gallery"
-        tools:layout="@layout/fragment_gallery" />
+        tools:layout="@layout/fragment_reminder" />
 
     <fragment
         android:id="@+id/nav_recycle"
