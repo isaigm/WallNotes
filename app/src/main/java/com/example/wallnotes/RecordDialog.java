@@ -4,14 +4,13 @@ import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import androidx.fragment.app.DialogFragment;
-import android.content.DialogInterface;
 import android.media.AudioFormat;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
+import java.io.File;
 import android.os.Environment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,16 +22,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
-import omrecorder.AudioChunk;
 import omrecorder.AudioRecordConfig;
 import omrecorder.OmRecorder;
 import omrecorder.PullTransport;
@@ -199,8 +194,17 @@ public class RecordDialog extends DialogFragment {
     @NonNull
     private File file() {
         @SuppressLint("SimpleDateFormat") String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), timeStamp + ".wav");
-        _AudioSavePathInDevice = file.getPath();
+        File storageDir =  getActivity().getExternalFilesDir(Environment.DIRECTORY_MUSIC);
+        String fileName = "WAV_" + timeStamp + "_";
+        File file = null;
+        try {
+            file = File.createTempFile(fileName,
+                    ".wav",
+                    storageDir);
+            _AudioSavePathInDevice = file.getAbsolutePath();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return file;
     }
 

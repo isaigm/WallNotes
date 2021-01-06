@@ -28,7 +28,8 @@
         android:layout_marginBottom="?actionBarSize">
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            tools:ignore="UselessParent">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -61,22 +62,57 @@
                     android:layout_marginLeft="10dp"
                     android:layout_marginRight="10dp"
                     />
-              <com.google.android.material.card.MaterialCardView
-                  android:layout_width="wrap_content"
+              <LinearLayout
+                  android:id="@+id/player"
+                  android:layout_width="match_parent"
                   android:layout_height="wrap_content"
-                  android:id="@+id/card_vieww"
-                  app:cardElevation="4dp"
                   android:layout_marginStart="10dp"
-                  app:cardCornerRadius="4dp"
+                  android:layout_marginTop="15dp"
                   android:visibility="gone"
-                  app:cardUseCompatPadding="true">
-                  <TextView
+                  android:orientation="horizontal">
+                  <ImageButton
                       android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
-                      android:id="@+id/remind_date"
-                      android:layout_margin="2dp"
-                      android:textSize="15sp"/>
-              </com.google.android.material.card.MaterialCardView>
+                      android:id="@+id/play"
+                      android:src="@drawable/ic_play"/>
+                  <SeekBar android:id="@+id/sbProgress"
+                      android:layout_gravity="center"
+                      android:layout_width="match_parent"
+                      android:layout_marginEnd="0dp"
+                      android:layout_marginStart="0dp"
+                      android:layout_height="wrap_content" />
+              </LinearLayout>
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:cardElevation="4dp"
+                    android:layout_marginStart="10dp"
+                    app:cardCornerRadius="4dp"
+                    app:cardUseCompatPadding="true">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/remind_date"
+                        android:padding="5dp"
+                        android:visibility="gone"
+                        android:textSize="15sp"/>
+                </com.google.android.material.card.MaterialCardView>
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:cardElevation="4dp"
+                    android:layout_marginStart="10dp"
+                    app:cardCornerRadius="4dp"
+                    app:cardUseCompatPadding="true">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/location"
+                        android:padding="5dp"
+                        android:visibility="gone"
+                        android:text="HOLA"
+                        android:textSize="15sp"/>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </ScrollView>
     </LinearLayout>
@@ -85,7 +121,6 @@
     android:layout_height="match_parent">
         <com.google.android.material.bottomappbar.BottomAppBar
             android:id="@+id/bottom_app_bar"
-
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"

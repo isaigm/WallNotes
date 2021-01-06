@@ -13,6 +13,7 @@
         <item android:id="@+id/add_audio" android:title="Agregar nota de audio" android:icon="@drawable/micro"/>
         <item android:id="@+id/delete" android:icon="@drawable/papelera" android:title="Eliminar"/>
         <item android:id="@+id/cancel_alarm" android:icon="@drawable/alarm_off" android:title="Cancelar recordatorio"/>
+        <item android:id="@+id/add_pos" android:icon="@drawable/pos" android:title="Agregar posición"/>
     </menu>
     </item>
 </menu>

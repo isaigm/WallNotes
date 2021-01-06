@@ -2,6 +2,9 @@ package com.example.wallnotes;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.view.ActionMode;
@@ -34,6 +37,13 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
     private boolean mIsEnable = false;
     private boolean mIsSelectAll = false;
     private final NoteViewModel mNoteViewModel;
+    void cancelAlarm(Activity activity, Note note)
+    {
+        AlarmManager alarmManager = (AlarmManager) activity.getSystemService(Context.ALARM_SERVICE);
+        Intent myIntent = new Intent(activity.getApplicationContext(), NotifierAlarm.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(activity.getApplicationContext(), note.getUid(), myIntent, 0);
+        alarmManager.cancel(pendingIntent);
+    }
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -65,10 +75,11 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
                    public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
                        int id = item.getItemId();
                        if(id == R.id.menu_delete){
-                           for(int i = 0; i < mSelectedNotes.size(); i++){
-                               Note n = mSelectedNotes.get(i);
-                               n.setGoingToBeDeleted(true);
-                               mNoteViewModel.update(n);
+                           for(Note note : mSelectedNotes){
+                               note.setGoingToBeDeleted(true);
+                               cancelAlarm(mActivity, note);
+                               note.setRemindDate(null);
+                               mNoteViewModel.update(note);
                            }
                            mode.finish();
                        }
@@ -162,12 +173,14 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         private final TextView title;
         private final TextView content;
         private final TextView remindDate;
+        private final TextView location;
         private final ImageView imageView;
         private final CardView cardView;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.note_title);
             content = itemView.findViewById(R.id.note_content);
+            location = itemView.findViewById(R.id.loc);
             imageView = itemView.findViewById(R.id.img);
             cardView = itemView.findViewById(R.id.cv);
             remindDate = itemView.findViewById(R.id.remind_date);
@@ -176,6 +189,10 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
             if(note.getRemindDate() != null){
                 @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFor = new SimpleDateFormat("dd/MM/yyyy hh:mm");
                 remindDate.setText(dateFor.format(note.getRemindDate()));
+            }
+            if(note.getLocation() != null)
+            {
+                location.setText(note.getLocation());
             }
             title.setText(note.getTitle());
             content.setText(note.getContent());

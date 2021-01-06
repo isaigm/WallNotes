@@ -55,7 +55,7 @@ public class RecycleBinFragment extends Fragment {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == R.id.delete_notes)
         {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
             builder.setTitle("Alerta");
             builder.setMessage("Todas las notas se van a eliminar permanentemente");
             builder.setNegativeButton("Cancelar", null);

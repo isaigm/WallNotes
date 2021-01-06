@@ -1,6 +1,5 @@
 package com.example.wallnotes.ui.notes;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,8 +8,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.appcompat.widget.SearchView;
-import android.view.animation.AnimationUtils;
-import android.view.animation.LayoutAnimationController;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -23,9 +20,9 @@ import com.example.wallnotes.NoteAdapter;
 import com.example.wallnotes.Note;
 import com.example.wallnotes.NoteViewModel;
 import com.example.wallnotes.R;
+import com.example.wallnotes.Utils;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class NoteFragment extends Fragment{
 
@@ -93,7 +90,7 @@ public class NoteFragment extends Fragment{
                 mRecyclerview.setLayoutManager( new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
             }
             mRecyclerview.setAdapter(mAdapter);
-            runLayoutAnimation(mRecyclerview);
+            Utils.runLayoutAnimation(mRecyclerview);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -127,13 +124,5 @@ public class NoteFragment extends Fragment{
         if(mAdapter != null && mObserver != null){
             mAdapter.unregisterAdapterDataObserver(mObserver);
         }
-    }
-    private void runLayoutAnimation(final RecyclerView recyclerView) {
-        final Context context = recyclerView.getContext();
-        final LayoutAnimationController controller =
-                AnimationUtils.loadLayoutAnimation(context, R.anim.animation_layout);
-        recyclerView.setLayoutAnimation(controller);
-        Objects.requireNonNull(recyclerView.getAdapter()).notifyDataSetChanged();
-        recyclerView.scheduleLayoutAnimation();
     }
 }

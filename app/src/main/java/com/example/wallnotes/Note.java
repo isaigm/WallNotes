@@ -10,9 +10,6 @@ import java.util.Date;
 public class Note {
     @PrimaryKey(autoGenerate = true)
     private int uid;
-    @ColumnInfo(name = "created_at")
-    @TypeConverters({Converters.class})
-    private Date createdAt;
     @ColumnInfo(name = "title")
     private String title;
     @ColumnInfo(name = "content")
@@ -24,6 +21,10 @@ public class Note {
     @ColumnInfo(name = "remind_date")
     @TypeConverters({Converters.class})
     private Date remindDate;
+    @ColumnInfo(name = "audio")
+    private String audio;
+    @ColumnInfo(name = "location")
+    private String location;
     public int getUid() {
         return uid;
     }
@@ -48,17 +49,17 @@ public class Note {
     public void setImgUri(String imgUri) {
         this.imgUri = imgUri;
     }
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
     public boolean isGoingToBeDeleted() {
         return isGoingToBeDeleted;
     }
     public void setGoingToBeDeleted(boolean goingToBeDeleted) {
         isGoingToBeDeleted = goingToBeDeleted;
+    }
+    public String getAudio() {
+        return audio;
+    }
+    public void setAudio(String audio) {
+        this.audio = audio;
     }
     public Date getRemindDate() {
         return remindDate;
@@ -66,12 +67,18 @@ public class Note {
     public void setRemindDate(Date remindDate) {
         this.remindDate = remindDate;
     }
+    public String getLocation() {
+        return location;
+    }
+    public void setLocation(String location) {
+        this.location = location;
+    }
     public Note(String title, String content, String imgUri){
         this.title = title;
         this.content = content;
         this.imgUri = imgUri;
-        this.createdAt = null;
         this.isGoingToBeDeleted = false;
         this.remindDate = null;
+        this.location = null;
     }
 }
