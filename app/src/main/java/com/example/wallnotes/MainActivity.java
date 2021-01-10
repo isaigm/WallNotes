@@ -9,6 +9,8 @@ import android.view.Menu;
 import android.view.ViewParent;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
+
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
@@ -22,7 +24,7 @@ import androidx.preference.PreferenceManager;
 
 public class MainActivity extends AppCompatActivity  {
     private AppBarConfiguration mAppBarConfiguration;
-
+    private final static int REQUEST_READ = 13;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,6 +94,17 @@ public class MainActivity extends AppCompatActivity  {
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode == REQUEST_READ){
+            if (!(permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                Utils.showMessage(this, "Debes aceptar los permisos");
+                finish();
+            }
+        }
+    }
     public void requestRead() {
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -99,7 +112,7 @@ public class MainActivity extends AppCompatActivity  {
 
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    0);
+                    REQUEST_READ);
         }
     }
 }
