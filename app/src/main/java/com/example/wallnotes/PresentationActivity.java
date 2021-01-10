@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.ViewFlipper;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PresentationActivity extends AppCompatActivity {

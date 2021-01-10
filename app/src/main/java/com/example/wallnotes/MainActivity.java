@@ -18,6 +18,7 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.preference.PreferenceManager;
 
 public class MainActivity extends AppCompatActivity  {
     private AppBarConfiguration mAppBarConfiguration;
@@ -29,6 +30,13 @@ public class MainActivity extends AppCompatActivity  {
         if(!details.contains("first_time")){
             startActivity(new Intent(MainActivity.this, PresentationActivity.class));
             finish();
+        }
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String theme = sharedPreferences.getString("theme", "");
+        if(theme.equals("morado")){
+            getTheme().applyStyle(R.style.morado, true);
+        }else if(theme.equals("verde")){
+            getTheme().applyStyle(R.style.verde, true);
         }
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -44,7 +52,7 @@ public class MainActivity extends AppCompatActivity  {
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_home, R.id.nav_reminder, R.id.nav_recycle, R.id.nav_conf)
-                .setDrawerLayout(drawer)
+                .setOpenableLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);

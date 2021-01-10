@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.media.Image;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -175,8 +176,10 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         private final TextView location;
         private final ImageView imageView;
         private final CardView cardView;
+        private final ImageView icon;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+            icon = itemView.findViewById(R.id.audio_icon);
             title = itemView.findViewById(R.id.note_title);
             content = itemView.findViewById(R.id.note_content);
             location = itemView.findViewById(R.id.loc);
@@ -194,6 +197,9 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
             {
                 location.setVisibility(View.VISIBLE);
                 location.setText(note.getLocation());
+            }
+            if(note.getAudio() != null){
+                icon.setVisibility(View.VISIBLE);
             }
             title.setText(note.getTitle());
             content.setText(note.getContent());

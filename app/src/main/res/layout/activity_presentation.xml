@@ -75,7 +75,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Haz listas, toma fotos, y comparte tus ideas:\nlo que funciona para ti, funciona en Keep"
+                android:text="Haz listas, toma fotos, y comparte tus ideas:\nlo que funciona para ti, funciona en Wall Notes"
                 android:layout_gravity="center"
                 android:textSize="14sp"
                 android:textAlignment="center"

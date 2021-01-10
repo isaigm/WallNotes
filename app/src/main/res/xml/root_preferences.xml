@@ -6,7 +6,7 @@
             app:title="Agregar elementos al final" />
 
         <ListPreference
-            app:defaultValue="claro"
+            app:defaultValue="verde"
             app:entries="@array/theme_entries"
             app:entryValues="@array/theme_values"
             app:key="theme"

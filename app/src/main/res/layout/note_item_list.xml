@@ -74,6 +74,15 @@
                 android:paddingRight="10dp"
                 android:layout_below="@id/remind_date"
                 android:visibility="gone"/>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/audio_icon"
+                android:layout_below="@+id/loc"
+                android:paddingStart="10dp"
+                android:paddingEnd="0dp"
+                android:visibility="gone"
+                android:src="@drawable/play_small"/>
         </RelativeLayout>
     </RelativeLayout>
 
