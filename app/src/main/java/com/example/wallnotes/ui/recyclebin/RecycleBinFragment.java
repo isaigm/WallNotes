@@ -17,6 +17,7 @@ import com.example.wallnotes.Note;
 import com.example.wallnotes.NoteViewModel;
 import com.example.wallnotes.R;
 import com.example.wallnotes.RecycleBinAdapter;
+import com.example.wallnotes.Utils;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,22 +56,27 @@ public class RecycleBinFragment extends Fragment {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == R.id.delete_notes)
         {
-            AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-            builder.setTitle("Alerta");
-            builder.setMessage("Todas las notas se van a eliminar permanentemente");
-            builder.setNegativeButton("Cancelar", null);
-            builder.setPositiveButton("Aceptar", (dialog, which) -> {
-                List<Note> data = mRecycleBinAdapter.getmData();
-                if(data != null)
+            List<Note> data = mRecycleBinAdapter.getmData();
+            if(data != null)
+            {
+                if(data.size() == 0)
                 {
-                    for(Note n: data)
-                    {
-                        mNoteViewModel.delete(n);
-                    }
+                    Utils.showMessage(requireContext(), "No hay más notas por eliminar");
+                }else{
+                    AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+                    builder.setTitle("Alerta");
+                    builder.setMessage("Todas las notas se van a eliminar permanentemente");
+                    builder.setNegativeButton("Cancelar", null);
+                    builder.setPositiveButton("Aceptar", (dialog, which) -> {
+                        for(Note n: data)
+                        {
+                            mNoteViewModel.delete(n);
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
                 }
-            });
-            AlertDialog dialog = builder.create();
-            dialog.show();
+            }
         }
         return super.onOptionsItemSelected(item);
     }

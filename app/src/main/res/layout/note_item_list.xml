@@ -38,7 +38,6 @@
                 android:paddingTop="10dp"
                 android:paddingLeft="10dp"
                 android:paddingBottom="5dp"
-                android:text=""
                 android:maxLines="2"
                 android:ellipsize="end" />
             <TextView
@@ -51,7 +50,6 @@
                 android:paddingBottom="10dp"
                 android:paddingRight="10dp"
                 android:layout_below="@+id/note_title"
-                android:text=""
                 android:maxLines="11"
                 android:ellipsize="end" />
             <TextView
@@ -63,7 +61,8 @@
                 android:paddingTop="0dp"
                 android:paddingLeft="10dp"
                 android:paddingRight="10dp"
-                android:layout_below="@id/note_content" />
+                android:layout_below="@id/note_content"
+                android:visibility="gone"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -73,7 +72,8 @@
                 android:paddingTop="0dp"
                 android:paddingLeft="10dp"
                 android:paddingRight="10dp"
-                android:layout_below="@id/remind_date" />
+                android:layout_below="@id/remind_date"
+                android:visibility="gone"/>
         </RelativeLayout>
     </RelativeLayout>
 

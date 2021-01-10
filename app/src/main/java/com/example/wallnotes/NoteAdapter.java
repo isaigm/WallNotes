@@ -24,7 +24,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -188,10 +187,12 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
         public void setData(Note note) {
             if(note.getRemindDate() != null){
                 @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFor = new SimpleDateFormat("dd/MM/yyyy hh:mm");
+                remindDate.setVisibility(View.VISIBLE);
                 remindDate.setText(dateFor.format(note.getRemindDate()));
             }
             if(note.getLocation() != null)
             {
+                location.setVisibility(View.VISIBLE);
                 location.setText(note.getLocation());
             }
             title.setText(note.getTitle());

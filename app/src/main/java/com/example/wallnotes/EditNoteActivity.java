@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import android.Manifest;
@@ -27,6 +26,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
@@ -71,13 +72,16 @@ public class EditNoteActivity extends AppCompatActivity {
     private String mAudioPath = null;
     private LinearLayout mLinearLayout = null;
     private String mLocation;
+    boolean mPause = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
         setContentView(R.layout.activity_edit_note);
         mProgress = findViewById(R.id.sbProgress);
-        Handler updateHandler = new Handler();
+        Handler updateHandler = new Handler(Looper.getMainLooper());
         Toolbar toolbar = findViewById(R.id.note_toolbar);
         ImageButton btnPlay = findViewById(R.id.play);
         setSupportActionBar(toolbar);
@@ -200,14 +204,27 @@ public class EditNoteActivity extends AppCompatActivity {
             }
         });
         mPlayer = new MediaPlayer();
-        mPlayer.setOnCompletionListener(mp -> mPlayer.reset());
+        mPlayer.setOnCompletionListener(mp -> {
+            mPlayer.reset();
+            mPause = false;
+        });
         mPlayer.setOnPreparedListener(mediaPlayer -> {
             mProgress.setMax(mediaPlayer.getDuration() / 1000);
             mediaPlayer.start();
         });
         btnPlay.setOnClickListener(v -> {
             if (mAudioPath != null) {
-                playAudio(mAudioPath);
+                if(mPlayer.isPlaying())
+                {
+                    mPlayer.pause();
+                    mPause = true;
+                }else if(mPause){
+                    mPlayer.start();
+                    mPause = false;
+                }else{
+                    mPause = false;
+                    playAudio(mAudioPath);
+                }
             }
         });
         mProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -467,13 +484,15 @@ public class EditNoteActivity extends AppCompatActivity {
         try {
             mPlayer.setDataSource(getBaseContext(), mediaUri);
             mProgress.setProgress(0);
-            mPlayer.prepare();
+            mPlayer.prepareAsync();
         } catch (IOException ex) {
             ex.printStackTrace();
         }
     }
 
     void getPos() {
+        mTvLocation.setVisibility(View.VISIBLE);
+        mTvLocation.setText("Cargando ubicación...");
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         LocationListener locationListener = new LocationListener() {
             public void onLocationChanged(Location location) {
