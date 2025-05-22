@@ -18,6 +18,24 @@
         <item name="android:actionModeBackground">@color/purple_500</item>
         <item name="actionModeBackground">@color/purple_500</item>
     </style>
+
+    <!-- NUEVO TEMA: Azulado -->
+    <style name="azul" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="windowActionModeOverlay">true</item>
+        <item name="colorPrimary">@color/blue_primary</item> <!-- e.g., @color/md_blue_500 -->
+        <item name="android:actionModeBackground">@color/blue_primary</item>
+        <item name="actionModeBackground">@color/blue_primary</item>
+        <item name="colorPrimaryVariant">@color/blue_primary_dark</item> <!-- e.g., @color/md_blue_700 -->
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/cyan_accent</item> <!-- e.g., @color/md_cyan_A200 -->
+        <item name="colorSecondaryVariant">@color/cyan_accent_dark</item> <!-- e.g., @color/md_cyan_A400 -->
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+    </style>
+
     <style name="verde" parent="Theme.MaterialComponents.Light.NoActionBar">
         <!-- Primary brand color. -->
         <item name="windowActionModeOverlay">true</item>
@@ -37,8 +55,6 @@
     <style name="Theme.WallNotes.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-
-
 
     </style>
 

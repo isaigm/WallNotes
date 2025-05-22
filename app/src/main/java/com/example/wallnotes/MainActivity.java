@@ -24,7 +24,6 @@ import androidx.preference.PreferenceManager;
 
 public class MainActivity extends AppCompatActivity  {
     private AppBarConfiguration mAppBarConfiguration;
-    private final static int REQUEST_READ = 13;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,11 +34,18 @@ public class MainActivity extends AppCompatActivity  {
         }
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String theme = sharedPreferences.getString("theme", "");
-        if(theme.equals("morado")){
-            getTheme().applyStyle(R.style.morado, true);
-        }else if(theme.equals("verde")){
-            getTheme().applyStyle(R.style.verde, true);
+        switch (theme) {
+            case "morado":
+                getTheme().applyStyle(R.style.morado, true);
+                break;
+            case "verde":
+                getTheme().applyStyle(R.style.verde, true);
+                break;
+            case "azul":
+                getTheme().applyStyle(R.style.azul, true);
+                break;
         }
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -78,11 +84,6 @@ public class MainActivity extends AppCompatActivity  {
         });
     }
     @Override
-    protected void onStart() {
-        super.onStart();
-        requestRead();
-    }
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
@@ -93,26 +94,5 @@ public class MainActivity extends AppCompatActivity  {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(requestCode == REQUEST_READ){
-            if (!(permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                Utils.showMessage(this, "Debes aceptar los permisos");
-                finish();
-            }
-        }
-    }
-    public void requestRead() {
-        if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    REQUEST_READ);
-        }
     }
 }

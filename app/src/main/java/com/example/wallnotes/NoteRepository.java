@@ -55,4 +55,7 @@ public class NoteRepository {
         }
         return null;
     }
+    public LiveData<Note> getNoteByIdLiveData(int noteId) {
+        return mNoteDao.getNoteByIdLiveData(noteId);
+    }
 }

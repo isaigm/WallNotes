@@ -27,6 +27,9 @@ public class NoteViewModel extends AndroidViewModel {
         return mNotesToBeDeleted;
     }
     public LiveData<List<Note>> getReminders() { return mReminders; }
+    public LiveData<Note> getNoteByIdLiveData(int id) {
+        return noteRepository.getNoteByIdLiveData(id);
+    }
     public void addNote(Note note) {
         noteRepository.addNote(note);
     }

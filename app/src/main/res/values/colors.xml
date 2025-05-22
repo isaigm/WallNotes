@@ -45,4 +45,10 @@
     <color name="blue">#0288D1</color>
     <color name="blue_dark">#005B9F</color>
     <color name="blue_light">#81D4FA</color>
+
+    <color name="blue_primary">#2196F3</color>
+    <color name="blue_primary_dark">#1976D2</color>
+    <color name="cyan_accent">#00BCD4</color>
+    <color name="cyan_accent_dark">#0097A7</color>
+
 </resources>

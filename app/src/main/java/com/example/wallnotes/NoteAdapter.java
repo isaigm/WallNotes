@@ -7,7 +7,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.media.Image;
+import android.util.Log;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -186,8 +186,15 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
             imageView = itemView.findViewById(R.id.img);
             cardView = itemView.findViewById(R.id.cv);
             remindDate = itemView.findViewById(R.id.remind_date);
+
         }
         public void setData(Note note) {
+            location.setText(null);
+            location.setVisibility(View.GONE);
+            icon.setVisibility(View.GONE);
+            remindDate.setVisibility(View.GONE);
+
+
             if(note.getRemindDate() != null){
                 @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFor = new SimpleDateFormat("dd/MM/yyyy hh:mm");
                 remindDate.setVisibility(View.VISIBLE);

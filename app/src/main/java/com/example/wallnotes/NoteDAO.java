@@ -39,4 +39,11 @@ public interface NoteDAO {
 
     @Query("SELECT * FROM notes WHERE remind_date IS NOT NULL")
     LiveData<List<Note>> getReminders();
+
+
+    @Query("SELECT * FROM notes WHERE uid = :noteId")
+    LiveData<Note> getNoteByIdLiveData(int noteId);
+
+    // En tu NoteRepository.java
+
 }
