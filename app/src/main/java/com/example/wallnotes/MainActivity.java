@@ -44,8 +44,10 @@ public class MainActivity extends AppCompatActivity  {
             case "azul":
                 getTheme().applyStyle(R.style.azul, true);
                 break;
+            case "oscuro":
+                getTheme().applyStyle(R.style.oscuro, true);
+                break;
         }
-
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

@@ -8,4 +8,30 @@
         <item name="android:background">@color/black_overlay</item>
         <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
     </style>
+    <style name="MyDialogButton.Dark" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/white</item>
+        <!-- También puedes cambiar materialThemeOverlay si necesitas colores de fondo/ripple diferentes -->
+    </style>
+
+    <style name="MyDialogButton.Light" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/black</item>
+    </style>
+    <!-- En res/values/themes.xml (para temas claros) -->
+    <style name="MiAlertDialogTheme.Light" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <!-- Aquí puedes poner los buttonBar...ButtonStyle si quieres que SOLO los diálogos tengan esos botones -->
+        <item name="buttonBarNegativeButtonStyle">@style/MyDialogButton.Light</item>
+        <item name="buttonBarPositiveButtonStyle">@style/MyDialogButton.Light</item>
+        <!-- Asegúrate que colorSurface y colorOnSurface estén bien para el diálogo -->
+        <item name="colorSurface">@color/dialog_surface_light</item> <!-- Un color claro para el fondo del diálogo -->
+        <item name="colorOnSurface">@color/dialog_on_surface_light</item> <!-- Texto/iconos sobre esa superficie -->
+    </style>
+
+    <!-- En res/values-night/themes.xml (para temas oscuros) -->
+    <style name="MiAlertDialogTheme.Dark" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="buttonBarNegativeButtonStyle">@style/MyDialogButton.Dark</item>
+        <item name="buttonBarPositiveButtonStyle">@style/MyDialogButton.Dark</item>
+        <item name="colorSurface">@color/dialog_surface_dark</item> <!-- Un color oscuro para el fondo del diálogo -->
+        <item name="colorOnSurface">@color/dialog_on_surface_dark</item> <!-- Texto/iconos claros sobre esa superficie -->
+    </style>
+
 </resources>

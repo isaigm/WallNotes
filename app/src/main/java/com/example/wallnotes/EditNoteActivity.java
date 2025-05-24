@@ -1,5 +1,4 @@
 package com.example.wallnotes;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -12,7 +11,6 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.app.PendingIntent;
@@ -47,7 +45,6 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.bumptech.glide.Glide;
 import com.google.android.material.bottomappbar.BottomAppBar;
 import java.io.File;
@@ -59,7 +56,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import static java.text.DateFormat.getDateInstance;
-
 public class EditNoteActivity extends AppCompatActivity {
     static MediaPlayer mPlayer = null;
     private SeekBar mProgress;
@@ -84,25 +80,29 @@ public class EditNoteActivity extends AppCompatActivity {
     boolean mPause = false;
     private static final int REQUEST_CODE_POST_NOTIFICATIONS = 101;
     private static final String TAG_PERMISSION = "EditNoteActivityPerm";
-    // o acceso directo al Repository
     private LiveData<Note> mCurrentNoteLiveData;
     private int mCurrentNoteId = -1;
-    private NoteViewModel mNoteViewModel; // Asumiendo que tienes un ViewModel
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mNoteViewModel = new ViewModelProvider(this).get(NoteViewModel.class);
+        NoteViewModel mNoteViewModel = new ViewModelProvider(this).get(NoteViewModel.class);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String theme = sharedPreferences.getString("theme", "");
         mLocation = null;
-        if(theme.equals("morado")){
-            getTheme().applyStyle(R.style.morado, true);
-        }else if(theme.equals("verde")){
-            getTheme().applyStyle(R.style.verde, true);
-        }
-        else if (theme.equals("azul"))
-        {
-            getTheme().applyStyle(R.style.azul, true);
+        switch (theme) {
+            case "morado":
+                getTheme().applyStyle(R.style.morado, true);
+                break;
+            case "verde":
+                getTheme().applyStyle(R.style.verde, true);
+                break;
+            case "azul":
+                getTheme().applyStyle(R.style.azul, true);
+                break;
+            case "oscuro":
+                getTheme().applyStyle(R.style.oscuro, true);
+                break;
         }
         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
         StrictMode.setVmPolicy(builder.build());
@@ -120,6 +120,7 @@ public class EditNoteActivity extends AppCompatActivity {
         mLinearLayout = findViewById(R.id.player);
         BottomAppBar bottomAppBar = findViewById(R.id.bottom_app_bar);
         bottomAppBar.setElevation(0);
+        Log.d("COLOR",  String.format("#%08X", bottomAppBar.getBackgroundTint().getDefaultColor()));
         mNoteRepository = new NoteRepository(getApplication());
         mTitle = findViewById(R.id.title);
         mContent = findViewById(R.id.content);
@@ -191,12 +192,10 @@ public class EditNoteActivity extends AppCompatActivity {
                 mPhotoPath = null;
 
             } else if (id == R.id.take_photo) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                        openCamera();
-                    } else {
-                        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA);
-                    }
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                    openCamera();
+                } else {
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA);
                 }
             } else if (id == R.id.cancel_alarm) {
                 if (mCurrNote != null) {
@@ -258,11 +257,9 @@ public class EditNoteActivity extends AppCompatActivity {
                     mPlayer.seekTo(progress * 1000);
                 }
             }
-
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
             }
-
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
             }
@@ -278,7 +275,6 @@ public class EditNoteActivity extends AppCompatActivity {
             }
         });
     }
-
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -286,7 +282,6 @@ public class EditNoteActivity extends AppCompatActivity {
         outState.putString("location", mLocation);
         outState.putString("audio", mAudioPath);
     }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -295,39 +290,27 @@ public class EditNoteActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK && data != null && data.getData() != null) { //Añadido data.getData() != null
                     Uri selectedImageUri = data.getData();
                     try {
-                        // *** PASO CRUCIAL ***
-                        // Solicita permisos persistentes de lectura para este URI
                         final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
                         getContentResolver().takePersistableUriPermission(selectedImageUri, takeFlags);
 
-                        mImgUri = selectedImageUri.toString(); // Guarda el URI como String
+                        mImgUri = selectedImageUri.toString();
                         loadImage(mImgUri);
 
                     } catch (SecurityException e) {
                         Toast.makeText(this, "No se pudo obtener permiso para la imagen.", Toast.LENGTH_SHORT).show();
-                        mImgUri = null; // No guardar el URI si no se pudo obtener el permiso
+                        mImgUri = null;
                     }
                 }
                 break;
             case REQUEST_CAMERA:
                 if (resultCode == RESULT_OK) {
-                    // mPhotoPath ya debería estar configurado por openCamera()
                     if (mPhotoPath != null) {
                         File imageFile = new File(mPhotoPath);
-                        // Asegúrate de que el archivo existe antes de intentar cargarlo
                         if (imageFile.exists()) {
-                            // Convertir el path del archivo a un content URI usando FileProvider
-                            // Esto es importante para que Glide y otros componentes puedan accederlo de forma segura
-                            // Asumo que "com.example.wallnotes.fileprovider" es tu autoridad de FileProvider
                             Uri photoFileUri = FileProvider.getUriForFile(this,
                                     "com.example.wallnotes.fileprovider",
                                     imageFile);
-
-                            // Otorga permisos temporales al intent que lo necesite (si es necesario para Glide, aunque Glide suele manejarlos bien con FileProvider)
-                            // En este caso, solo estamos guardando el URI para uso interno con Glide
-                            // por lo que no siempre es necesario conceder permisos explícitos aquí si Glide lo maneja.
-
-                            mImgUri = photoFileUri.toString(); // Guardar el URI de FileProvider
+                            mImgUri = photoFileUri.toString();
                             loadImage(mImgUri);
                         } else {
                             Toast.makeText(this, "Error al cargar la foto tomada.", Toast.LENGTH_SHORT).show();
@@ -343,13 +326,11 @@ public class EditNoteActivity extends AppCompatActivity {
                 break;
         }
     }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.notes_menu, menu);
         return true;
     }
-
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.remind) {
@@ -365,7 +346,6 @@ public class EditNoteActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -377,14 +357,12 @@ public class EditNoteActivity extends AppCompatActivity {
             mPlayer = null;
         }
     }
-
     @Override
     public boolean onSupportNavigateUp() {
         updateOrSaveNote();
         finish();
         return super.onSupportNavigateUp();
     }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -413,21 +391,12 @@ public class EditNoteActivity extends AppCompatActivity {
             case REQUEST_CODE_POST_NOTIFICATIONS:
                 if (permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
                     Log.d(TAG_PERMISSION, "POST_NOTIFICATIONS permission granted by user after request.");
-                    // Permiso concedido, ahora intenta crear la alarma de nuevo.
-                    // Es importante llamar a la lógica que querías ejecutar originalmente.
-                    // Podrías tener una variable miembro para recordar la acción o llamar directamente
-                    // a una función que intente crear la alarma si las condiciones son correctas.
-                    // Por simplicidad, aquí asumimos que el usuario intentará de nuevo o
-                    // podrías llamar a createAlarm() si mCurrNote y mRemindDate son adecuados.
-                    // Si tienes los datos listos, puedes llamar a createAlarm() aquí.
-                    // Ejemplo:
-                    if (mCurrNote != null && mRemindDate == null) { // Re-evalúa la condición
+                    if (mCurrNote != null && mRemindDate == null) {
                         Log.d(TAG_PERMISSION, "Permission granted. Attempting to create alarm.");
-                        createAlarm(); // Llama a createAlarm si las condiciones son válidas
+                        createAlarm();
                     } else {
                         Log.d(TAG_PERMISSION, "Permission granted, but conditions for alarm not met now.");
                     }
-
                 } else {
                     Log.w(TAG_PERMISSION, "POST_NOTIFICATIONS permission denied by user.");
                     Toast.makeText(this, "Permiso de notificación denegado. Los recordatorios no se mostrarán.", Toast.LENGTH_LONG).show();
@@ -435,13 +404,11 @@ public class EditNoteActivity extends AppCompatActivity {
                 break;
         }
     }
-
     @Override
     public void onBackPressed() {
         super.onBackPressed();
         updateOrSaveNote();
     }
-
     void updateOrSaveNote() {
         String title = mTitle.getText().toString();
         String content = mContent.getText().toString();
@@ -471,7 +438,6 @@ public class EditNoteActivity extends AppCompatActivity {
             }
         }
     }
-
     public void openCamera() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         String timeStamp = getDateInstance().format(new Date());
@@ -556,35 +522,23 @@ public class EditNoteActivity extends AppCompatActivity {
 
         int flags;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Para Android 12+ necesitas especificar mutabilidad.
-            // FLAG_NO_CREATE: Si el PendingIntent no existe, no lo crea (devuelve null).
-            //                 Esto es generalmente seguro para cancelaciones.
-            // FLAG_IMMUTABLE: Ya que el PendingIntent original probablemente era inmutable.
-            //                 Si el original era mutable, debes usar FLAG_MUTABLE aquí también
-            //                 para que coincidan. Sin embargo, para alarmas estándar,
-            //                 inmutable es lo más común.
             flags = PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_IMMUTABLE;
         } else {
-            // Para versiones anteriores, FLAG_NO_CREATE es suficiente para verificar existencia y cancelar.
             flags = PendingIntent.FLAG_NO_CREATE;
         }
-
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 getApplicationContext(),
-                mCurrNote.getUid(), // Este es el requestCode que debe coincidir
+                mCurrNote.getUid(),
                 myIntent,
                 flags
         );
 
-        if (pendingIntent != null) { // Solo intenta cancelar si el PendingIntent fue encontrado/recreado
+        if (pendingIntent != null) {
             alarmManager.cancel(pendingIntent);
-            pendingIntent.cancel(); // También es buena práctica cancelar el PendingIntent mismo
+            pendingIntent.cancel();
         }
         mRemindDate = null;
-        // Podrías añadir un mensaje al usuario aquí si es necesario
-        // Utils.showMessage(this, "Recordatorio cancelado");
     }
-
     void createAlarm() {
         final Calendar newCalender = Calendar.getInstance();
         DatePickerDialog dialog = new DatePickerDialog(EditNoteActivity.this, (view, year, month, dayOfMonth) -> {
@@ -757,18 +711,14 @@ public class EditNoteActivity extends AppCompatActivity {
                     }
                 } catch (IOException e) {
                     Utils.showMessage(EditNoteActivity.this, "Ha ocurrido un error al obtener su posición");
-                    e.printStackTrace();
                 }
             }
             public void onProviderEnabled(String provider) {
             }
-
             public void onProviderDisabled(String provider) {
-
                 Utils.showMessage(EditNoteActivity.this, "Por favor, active el GPS y el internet");
             }
         };
-
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions

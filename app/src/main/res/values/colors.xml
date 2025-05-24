@@ -51,4 +51,53 @@
     <color name="cyan_accent">#00BCD4</color>
     <color name="cyan_accent_dark">#0097A7</color>
 
+
+    <color name="icon_tint_light">#FF000000</color> <!-- Negro para tema claro -->
+    <color name="icon_tint_dark">#FFFFFFFF</color>  <!-- Blanco para tema oscuro -->
+
+
+
+    <!-- NUEVOS COLORES PARA EL TEMA OSCURO MEJORADO -->
+
+    <!-- Primarios y Secundarios (Puedes elegir colores que no sean morados/negros intensos) -->
+    <!-- Ejemplo: Un azul grisáceo como primario y un teal más sutil como secundario -->
+    <color name="dark_custom_primary">#FF1E1E1E</color> <!-- Gris medio -->
+    <color name="dark_custom_primary_variant">#494949</color> <!-- Gris más oscuro para la Status Bar -->
+    <color name="dark_custom_on_primary">#FFFFFF</color> <!-- Texto blanco sobre el primario -->
+
+    <color name="dark_custom_secondary">#80CBC4</color> <!-- Un teal claro -->
+    <color name="dark_custom_secondary_variant">#4DB6AC</color> <!-- Teal un poco más oscuro -->
+    <color name="dark_custom_on_secondary">#000000</color> <!-- Texto negro sobre el secundario (ajustar si es necesario) -->
+    <color name="dark_custom_outline">#33FFFFFF</color> <!-- Blanco semi-transparente o un gris muy claro -->
+    <!-- Fondos y Superficies (Evitando el negro puro) -->
+    <color name="dark_custom_background">#121212</color> <!-- Gris muy oscuro (estándar de Material para fondo oscuro) -->
+    <color name="dark_custom_surface">#1E1E1E</color>    <!-- Gris oscuro ligeramente más claro para superficies (Cards, Dialogs) -->
+    <!-- Puedes probar con #212121 o #242424 si quieres variar -->
+
+    <!-- Colores "On" para texto e iconos sobre fondos/superficies -->
+    <color name="dark_custom_on_background">#E0E0E0</color> <!-- Blanco con alta énfasis (87% aprox) o un gris muy claro -->
+    <color name="dark_custom_on_surface">#FFFFFF</color>    <!-- Blanco con máxima énfasis sobre superficies -->
+
+        <!-- Error -->
+    <color name="dark_custom_error">#CF6679</color> <!-- Rojo estándar de Material para errores en tema oscuro -->
+    <color name="dark_custom_on_error">#000000</color> <!-- Texto negro sobre el color de error -->
+
+        <!-- Color para ActionMode -->
+    <color name="dark_custom_action_mode_background">@color/dark_custom_surface</color> <!-- O @color/dark_custom_primary -->
+
+    <!-- colors.xml (o values-night/colors.xml) -->
+    <color name="mi_color_primario_oscuro">#BB86FC</color> <!-- Un morado claro de Material -->
+    <color name="mi_color_sobre_primario_oscuro">#000000</color> <!-- Negro para texto/iconos sobre ese morado -->
+    <color name="mi_color_secundario_oscuro">#03DAC6</color> <!-- Un teal de Material -->
+    <color name="mi_color_sobre_secundario_oscuro">#000000</color>
+    <color name="mi_color_sobre_superficie_oscuro">#FFFFFF</color>
+<!-- Para tema claro -->
+    <color name="dialog_surface_light">#FFFFFF</color>
+    <color name="dialog_on_surface_light">#DE000000</color> <!-- Negro con opacidad -->
+
+    <!-- Para tema oscuro -->
+    <color name="dialog_surface_dark">#212121</color> <!-- Un gris oscuro, por ejemplo -->
+    <color name="dialog_on_surface_dark">#FFFFFFFF</color> <!-- Blanco para texto/iconos no seleccionados -->
+
+
 </resources>

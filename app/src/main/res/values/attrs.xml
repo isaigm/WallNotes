@@ -3,4 +3,6 @@
         <attr name="fullscreenBackgroundColor" format="color" />
         <attr name="fullscreenTextColor" format="color" />
     </declare-styleable>
+    <attr name="navItemIconTint" format="reference|color" />
+    <attr name="navItemTextColor" format="reference|color" />
 </resources>

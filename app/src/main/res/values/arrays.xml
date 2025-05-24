@@ -4,11 +4,13 @@
         <item>Verde</item>
         <item>Morado</item>
         <item>Azul</item>
+        <item>Oscuro</item>
     </string-array>
 
     <string-array name="theme_values">
         <item>verde</item>
         <item>morado</item>
         <item>azul</item>
+        <item>oscuro</item>
     </string-array>
 </resources>
