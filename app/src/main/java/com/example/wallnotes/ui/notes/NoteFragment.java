@@ -16,8 +16,9 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
-import com.example.wallnotes.NoteAdapter;
+
 import com.example.wallnotes.Note;
+import com.example.wallnotes.NoteAdapter;
 import com.example.wallnotes.NoteViewModel;
 import com.example.wallnotes.R;
 import com.example.wallnotes.Utils;
@@ -38,7 +39,7 @@ public class NoteFragment extends Fragment{
         mRecyclerview = root.findViewById(R.id.recycler_view);
         List<Note> data = new ArrayList<>();
         mAdapter = new NoteAdapter(data, getActivity(), mNoteViewModel);
-        mNoteViewModel.getCurrNotes().observe(getViewLifecycleOwner(), mAdapter::setmData);
+        mNoteViewModel.getCurrNotes().observe(getViewLifecycleOwner(), mAdapter::setDataList);
         mRecyclerview.setAdapter(mAdapter);
         final TextView textView = root.findViewById(R.id.text_home);
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity());
@@ -67,7 +68,7 @@ public class NoteFragment extends Fragment{
     }
     void getNotesFromDb(String text) {
         mNoteViewModel.search(text).observe(this, notes -> {
-            mAdapter.setmData(notes);
+            mAdapter.setDataList(notes);
         });
     }
     @Override

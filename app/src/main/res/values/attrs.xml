@@ -9,4 +9,7 @@
     <attr name="cardItemBackgroundSelected" format="color" />
     <attr name="cardItemBackgroundDefault" format="color" />
 
+    <attr name="menuItemTextColor" format="color" />
+
+
 </resources>

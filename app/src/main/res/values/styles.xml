@@ -34,4 +34,8 @@
         <item name="colorOnSurface">@color/dialog_on_surface_dark</item> <!-- Texto/iconos claros sobre esa superficie -->
     </style>
 
+    <style name="CustomMenuItemStyle" parent="Widget.AppCompat.TextView.SpinnerItem">
+        <item name="android:textColor">?attr/menuItemTextColor</item>
+    </style>
+
 </resources>

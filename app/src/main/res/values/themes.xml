@@ -1,4 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="MyPopupMenu.Light" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="MyPopupMenu.Dark" parent="ThemeOverlay.AppCompat.Dark" />
+    <style name="Theme.WallNotes.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
     <!-- Base application theme. -->
     <style name="Theme.WallNotes" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color. -->
@@ -15,6 +20,7 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
+        <item name="popupTheme">@style/MyPopupMenu.Light</item>
     </style>
     <style name="morado" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="windowActionModeOverlay">true</item>
@@ -25,6 +31,8 @@
         <item name="navItemTextColor">@color/navigation_item_text_tint_light</item>
         <item name="cardItemBackgroundSelected">#60000000</item>
         <item name="cardItemBackgroundDefault">@android:color/transparent</item>
+        <item name="popupTheme">@style/MyPopupMenu.Light</item>
+
     </style>
 
     <!-- NUEVO TEMA: Azulado -->
@@ -46,6 +54,8 @@
         <item name="colorSecondary">@color/cyan_accent</item> <!-- e.g., @color/md_cyan_A200 -->
         <item name="colorSecondaryVariant">@color/cyan_accent_dark</item> <!-- e.g., @color/md_cyan_A400 -->
         <item name="colorOnSecondary">@color/black</item>
+        <item name="popupTheme">@style/MyPopupMenu.Light</item>
+
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
     </style>
@@ -67,6 +77,8 @@
         <item name="colorOnSecondary">@color/black</item>
         <item name="cardItemBackgroundSelected">#60000000</item>
         <item name="cardItemBackgroundDefault">@android:color/transparent</item>
+        <item name="popupTheme">@style/MyPopupMenu.Light</item>
+
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
@@ -77,9 +89,9 @@
 
     </style>
 
-    <style name="Theme.WallNotes.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
-    <style name="Theme.WallNotes.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+
 
     <style name="Theme.AppCompat.Light.NoActionBar.Fullscreen" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:actionBarStyle">

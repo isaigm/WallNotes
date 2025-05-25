@@ -6,254 +6,156 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
+import android.os.Build;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.ActionMode;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelStoreOwner;
-import androidx.recyclerview.widget.RecyclerView;
-import com.bumptech.glide.Glide;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 
-public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
-    private List<Note> mData;
-    private final List<Note> mSelectedNotes = new ArrayList<>();
-    private final Activity mActivity;
-    private SizeViewModel mSizeViewModel;
-    private boolean mIsEnable = false;
-    private boolean mIsSelectAll = false;
-    private final NoteViewModel mNoteViewModel;
-    void cancelAlarm(Activity activity, Note note)
-    {
+public class NoteAdapter extends BaseAdapter<NoteAdapter.NoteViewHolder> {
+
+    public NoteAdapter(List<Note> data, Activity activity, NoteViewModel noteViewModel) {
+        super(data, activity, noteViewModel);
+    }
+
+    @Override
+    protected boolean handleActionItemClick(ActionMode mode, MenuItem item, List<Note> selectedNotesCopy, List<Note> allNotes) {
+        // Common "Select All" logic if R.id.menu_select_all is used by both
+        // Ensure R.id.menu_select_all exists or this will throw a NullPointerException if item.getItemId() matches an ID not present
+        // It might be safer to check for specific known common IDs.
+        // For now, assuming R.id.menu_select_all is the common ID if this functionality is shared.
+        // If not, this part should be in handleSpecificActionItemClick or made conditional.
+        if (item.getItemId() == R.id.menu_select_all) { // Example: common select all ID
+            if (mSelectedNotes.size() == mData.size()) { // All are selected, so deselect all
+                mIsSelectAll = false;
+                mSelectedNotes.clear();
+            } else { // Not all (or none) are selected, so select all
+                mIsSelectAll = true;
+                mSelectedNotes.clear();
+                if (mData != null) {
+                    mSelectedNotes.addAll(mData);
+                }
+            }
+            if (mSizeViewModel != null) {
+                mSizeViewModel.setText(String.valueOf(mSelectedNotes.size()));
+            }
+            notifyDataSetChanged();
+            return true;
+        }
+        return handleSpecificActionItemClick(mode, item, selectedNotesCopy, allNotes);
+    }
+
+    @Override
+    protected int getListItemLayoutResId() {
+        return R.layout.note_item_list;
+    }
+
+    @Override
+    protected NoteViewHolder createViewHolder(View view) {
+        return new NoteViewHolder(view);
+    }
+
+    @Override
+    protected int getActionModeMenuResId() {
+        return R.menu.submenu;
+    }
+
+    @Override
+    protected String getActionModeTitleSuffix() {
+        return " seleccionados";
+    }
+
+    @Override
+    protected boolean handleSpecificActionItemClick(ActionMode mode, MenuItem item, List<Note> selectedNotes, List<Note> allNotes) {
+        int id = item.getItemId();
+        if (id == R.id.menu_delete) {
+            for (Note note : selectedNotes) { // Iterate over the copy passed
+                note.setGoingToBeDeleted(true);
+                cancelAlarm(mActivity, note);
+                note.setRemindDate(null);
+                mNoteViewModel.update(note);
+            }
+            // mSelectedNotes from base class is cleared in onDestroyActionMode
+            // or should be cleared here if mode doesn't finish immediately for all actions
+            mode.finish(); // Finishes action mode
+            return true;
+        }
+        // "Select All" is handled by the base class if R.id.menu_select_all is the ID in submenu.xml
+        // If R.id.menu_select_all is handled here, ensure base class logic for it is not duplicated or is bypassed.
+        return false; // Return false if not handled here, allowing base to try (if base has more common items)
+    }
+
+    @Override
+    protected void handleRegularItemClick(Note note, int position) {
+        Intent intent = new Intent(mActivity, EditNoteActivity.class);
+        intent.putExtra("uid", note.getUid());
+        mActivity.startActivity(intent);
+        mActivity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+    }
+
+    @Override
+    protected void bindSpecificData(NoteViewHolder holder, Note note) {
+        // Reset visibility for recycled views
+        holder.location.setVisibility(View.GONE);
+        holder.icon.setVisibility(View.GONE);
+        holder.remindDate.setVisibility(View.GONE);
+
+        if (note.getRemindDate() != null) {
+            @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFor = new SimpleDateFormat("dd/MM/yyyy hh:mm");
+            holder.remindDate.setVisibility(View.VISIBLE);
+            holder.remindDate.setText(dateFor.format(note.getRemindDate()));
+        }
+        if (note.getLocation() != null) {
+            holder.location.setVisibility(View.VISIBLE);
+            holder.location.setText(note.getLocation());
+        }
+        if (note.getAudio() != null) {
+            holder.icon.setVisibility(View.VISIBLE);
+        }
+    }
+
+    void cancelAlarm(Activity activity, Note note) {
+        if (note.getRemindDate() == null) return;
         AlarmManager alarmManager = (AlarmManager) activity.getSystemService(Context.ALARM_SERVICE);
         Intent myIntent = new Intent(activity.getApplicationContext(), NotifierAlarm.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(activity.getApplicationContext(), note.getUid(), myIntent, 0);
-        alarmManager.cancel(pendingIntent);
-    }
-    @NonNull
-    @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.note_item_list, parent, false);
-        mSizeViewModel = new ViewModelProvider((ViewModelStoreOwner) mActivity).get(SizeViewModel.class);
-        return new ViewHolder(view);
-    }
-    @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Note note = mData.get(position);
 
-
-        TypedValue typedValueDefault = new TypedValue();
-        Context context = holder.itemView.getContext();
-        context.getTheme().resolveAttribute(R.attr.cardItemBackgroundDefault, typedValueDefault, true);
-        int defaultBackgroundColor = typedValueDefault.data;
-
-        // Resolve selected color from theme
-        TypedValue typedValueSelected = new TypedValue();
-        context.getTheme().resolveAttribute(R.attr.cardItemBackgroundSelected, typedValueSelected, true);
-        int selectedBackgroundColor = typedValueSelected.data;
-
-
-        if (mIsSelectAll || mSelectedNotes.contains(note)) { // Added check for mSelectedNotes
-            holder.cardView.setCardBackgroundColor(selectedBackgroundColor);
+        int flags;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            flags = PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_IMMUTABLE;
         } else {
-            holder.cardView.setCardBackgroundColor(defaultBackgroundColor);
+            flags = PendingIntent.FLAG_NO_CREATE;
         }
-
-        if (note.getImgUri() != null) {
-            Glide.with(holder.itemView.getContext())
-                    .load(note.getImgUri())
-                    .error(R.drawable.reload)
-                    .into(holder.imageView);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                activity.getApplicationContext(),
+                note.getUid(),
+                myIntent,
+                flags
+        );
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent);
+            pendingIntent.cancel();
         } else {
-            holder.imageView.setImageDrawable(null); // Clear image if URI is null
-        }
-        holder.setData(note); // Call setData after background and image handling
-
-        holder.itemView.setOnLongClickListener(v -> {
-            if(!mIsEnable){
-               ActionMode.Callback callback = new ActionMode.Callback() {
-                   @Override
-                   public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                       MenuInflater menuInflater = mode.getMenuInflater();
-                       menuInflater.inflate(R.menu.submenu, menu);
-                       return true;
-                   }
-                   @Override
-                   public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                       mIsEnable = true;
-                       clickItem(holder);
-                       mSizeViewModel.getText().observe((LifecycleOwner) mActivity,
-                               s -> mode.setTitle(s + " seleccionados"));
-                       return true;
-                   }
-                   @Override
-                   public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                       int id = item.getItemId();
-                       if(id == R.id.menu_delete){
-                           for(Note note : mSelectedNotes){
-                               note.setGoingToBeDeleted(true);
-                               cancelAlarm(mActivity, note);
-                               note.setRemindDate(null);
-                               mNoteViewModel.update(note);
-                           }
-                           mode.finish();
-                       }
-                       else if(id == R.id.menu_select_all)
-                       {
-                           if(mSelectedNotes.size() == mData.size())
-                           {
-                               mIsSelectAll = false;
-                               mSelectedNotes.clear();
-                           }else{
-                               mIsSelectAll = true;
-                               mSelectedNotes.clear();
-                               mSelectedNotes.addAll(mData);
-                           }
-                           mSizeViewModel.setText(String.valueOf(mSelectedNotes.size()));
-                           notifyDataSetChanged();
-                       }
-                       return true;
-                   }
-                   @Override
-                   public void onDestroyActionMode(ActionMode mode) {
-                       mIsEnable = false;
-                       mIsSelectAll = false;
-                       mSelectedNotes.clear();
-                       notifyDataSetChanged();
-                   }
-               };
-                ((AppCompatActivity)v.getContext()).startActionMode(callback);
-            }else{
-                clickItem(holder);
-            }
-            return true;
-        });
-        holder.setData(note);
-        holder.imageView.setImageDrawable(null);
-        holder.itemView.setOnClickListener(v -> {
-            if(mIsEnable){
-                clickItem(holder);
-            }else {
-                Note n = mData.get(holder.getAdapterPosition());
-                Intent intent = new Intent(mActivity, EditNoteActivity.class);
-                intent.putExtra("uid", note.getUid());
-                mActivity.startActivity(intent);
-                mActivity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
-            }
-        });
-        if(mIsSelectAll){
-            holder.cardView.setCardBackgroundColor(0x60000000);
-        }
-        else{
-            holder.cardView.setCardBackgroundColor(Color.TRANSPARENT);
-        }
-        if(note.getImgUri() != null){
-            Glide.with(holder.itemView.getContext())
-                    .load(note.getImgUri())
-                    .error(R.drawable.reload)
-                    .into(holder.imageView);
+            Log.w("NoteAdapter", "PendingIntent to cancel alarm for note UID " + note.getUid() + " not found.");
         }
     }
 
-    private void clickItem(ViewHolder holder) {
-        Note note = mData.get(holder.getAdapterPosition());
-
-        // Resolve colors from theme
-        TypedValue typedValueSelected = new TypedValue();
-        TypedValue typedValueDefault = new TypedValue();
-        Context context = holder.itemView.getContext();
-        context.getTheme().resolveAttribute(R.attr.cardItemBackgroundSelected, typedValueSelected, true);
-        context.getTheme().resolveAttribute(R.attr.cardItemBackgroundDefault, typedValueDefault, true);
-
-        int selectedColor = typedValueSelected.data;
-        int defaultColor = typedValueDefault.data;
-
-        // Check current background color by comparing with the resolved default color
-        // Note: CardView.getCardBackgroundColor() returns a ColorStateList.
-        // For a simple solid color, getDefaultColor() is usually sufficient.
-        if (holder.cardView.getCardBackgroundColor().getDefaultColor() != selectedColor) {
-            holder.cardView.setCardBackgroundColor(selectedColor);
-            mSelectedNotes.add(note);
-        } else {
-            holder.cardView.setCardBackgroundColor(defaultColor);
-            mSelectedNotes.remove(note);
-        }
-        mSizeViewModel.setText(String.valueOf(mSelectedNotes.size()));
-    }
-    public void setmData(List<Note> newData){
-        if(mData != null){
-            mData.clear();
-            mData.addAll(newData);
-            notifyDataSetChanged();
-        }else{
-            mData = newData;
-        }
-    }
-    public NoteAdapter(List<Note> data, Activity activity, NoteViewModel noteViewModel){
-        this.mData = data;
-        this.mActivity = activity;
-        this.mNoteViewModel = noteViewModel;
-    }
-    @Override
-    public int getItemCount() {
-        return mData.size();
-    }
-    static public class ViewHolder extends RecyclerView.ViewHolder {
-        private final TextView title;
-        private final TextView content;
+    // --- Inner ViewHolder for NoteAdapter ---
+    public static class NoteViewHolder extends BaseAdapter.BaseViewHolder {
         private final TextView remindDate;
         private final TextView location;
-        private final ImageView imageView;
-        private final CardView cardView;
         private final ImageView icon;
-        public ViewHolder(@NonNull View itemView) {
+
+        public NoteViewHolder(@NonNull View itemView) {
             super(itemView);
             icon = itemView.findViewById(R.id.audio_icon);
-            title = itemView.findViewById(R.id.note_title);
-            content = itemView.findViewById(R.id.note_content);
             location = itemView.findViewById(R.id.loc);
-            imageView = itemView.findViewById(R.id.img);
-            cardView = itemView.findViewById(R.id.cv);
             remindDate = itemView.findViewById(R.id.remind_date);
-
-        }
-        public void setData(Note note) {
-            location.setText(null);
-            location.setVisibility(View.GONE);
-            icon.setVisibility(View.GONE);
-            remindDate.setVisibility(View.GONE);
-
-
-            if(note.getRemindDate() != null){
-                @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFor = new SimpleDateFormat("dd/MM/yyyy hh:mm");
-                remindDate.setVisibility(View.VISIBLE);
-                remindDate.setText(dateFor.format(note.getRemindDate()));
-            }
-            if(note.getLocation() != null)
-            {
-                location.setVisibility(View.VISIBLE);
-                location.setText(note.getLocation());
-            }
-            if(note.getAudio() != null){
-                icon.setVisibility(View.VISIBLE);
-            }
-            title.setText(note.getTitle());
-            content.setText(note.getContent());
         }
     }
 }

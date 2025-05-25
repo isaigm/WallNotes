@@ -1,6 +1,7 @@
 package com.example.wallnotes.ui.recyclebin;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,7 +35,7 @@ public class RecycleBinFragment extends Fragment {
         mRecyclerview.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
         List<Note> data = new ArrayList<>();
         mRecycleBinAdapter = new RecycleBinAdapter(data, getActivity(), mNoteViewModel);
-        mNoteViewModel.getNotesToBeDeleted().observe(getViewLifecycleOwner(), mRecycleBinAdapter::setmData);
+        mNoteViewModel.getNotesToBeDeleted().observe(getViewLifecycleOwner(), mRecycleBinAdapter::setDataList);
         mRecyclerview.setAdapter(mRecycleBinAdapter);
         final TextView tv = root.findViewById(R.id.text_bin);
         mObserver = new RecyclerView.AdapterDataObserver() {
@@ -56,10 +57,11 @@ public class RecycleBinFragment extends Fragment {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == R.id.delete_notes)
         {
-            List<Note> data = mRecycleBinAdapter.getmData();
+            Log.d("RecycleBinFragment", "onOptionsItemSelected: delete_notes");
+            List<Note> data = mRecycleBinAdapter.getDataList();
             if(data != null)
             {
-                if(data.size() == 0)
+                if(data.isEmpty())
                 {
                     Utils.showMessage(requireContext(), "No hay más notas por eliminar");
                 }else{

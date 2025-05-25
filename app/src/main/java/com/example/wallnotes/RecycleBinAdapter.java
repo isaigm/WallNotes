@@ -1,165 +1,97 @@
 package com.example.wallnotes;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Color;
+import android.util.TypedValue;
 import android.view.ActionMode;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
+// Import other necessary classes like Note, NoteViewModel, SizeViewModel, R, etc.
+// These should be available from the package or common Android/androidx libraries.
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelStoreOwner;
-import androidx.recyclerview.widget.RecyclerView;
-import com.bumptech.glide.Glide;
-import java.util.ArrayList;
+
 import java.util.List;
 
-public class RecycleBinAdapter extends RecyclerView.Adapter<RecycleBinAdapter.ViewHolder>{
-    private List<Note> mData;
-    private final List<Note> mSelectedNotes = new ArrayList<>();
-    private final Activity mActivity;
-    private SizeViewModel mSizeViewModel;
-    private final NoteViewModel mNoteViewModel;
-    private boolean mIsEnable = false;
-    private boolean mIsSelectAll = false;
-    @NonNull
-    @Override
-    public RecycleBinAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.note_item_list, parent, false);
-        mSizeViewModel = new ViewModelProvider((ViewModelStoreOwner) mActivity).get(SizeViewModel.class);
-        return new ViewHolder(view);
-    }
-    @Override
-    public void onBindViewHolder(@NonNull RecycleBinAdapter.ViewHolder holder, int position) {
-        Note note = mData.get(position);
-        holder.itemView.setOnLongClickListener(v -> {
-            if(!mIsEnable){
-                ActionMode.Callback callback = new ActionMode.Callback() {
-                    @Override
-                    public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                        MenuInflater menuInflater = mode.getMenuInflater();
-                        menuInflater.inflate(R.menu.bin_menu, menu);
-                        return true;
-                    }
-                    @Override
-                    public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                        mIsEnable = true;
-                        clickItem(holder);
-                        mSizeViewModel.getText().observe((LifecycleOwner) mActivity,
-                                s -> mode.setTitle(s + " seleccionados"));
-                        return true;
-                    }
-                    @Override
-                    public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                        int id = item.getItemId();
-                        if(id == R.id.menu_effective_delete){
-                            for(int i = 0; i < mSelectedNotes.size(); i++){
-                                Note n = mSelectedNotes.get(i);
-                                mNoteViewModel.delete(n);
+public class RecycleBinAdapter extends BaseAdapter<RecycleBinAdapter.RecycleBinViewHolder> {
 
-                            }
-                            mode.finish();
-                        }
-                        else if(id == R.id.menu_restore)
-                        {
-                            for(int i = 0; i < mSelectedNotes.size(); i++){
-                                Note n = mSelectedNotes.get(i);
-                                n.setGoingToBeDeleted(false);
-                                mNoteViewModel.update(n);
-                            }
-                            mode.finish();
-                        }
-                        return true;
-                    }
-                    @Override
-                    public void onDestroyActionMode(ActionMode mode) {
-                        mIsEnable = false;
-                        mIsSelectAll = false;
-                        mSelectedNotes.clear();
-                        notifyDataSetChanged();
-                    }
-                };
-                ((AppCompatActivity)v.getContext()).startActionMode(callback);
-            }else{
-                clickItem(holder);
-            }
-            return true;
-        });
-        holder.itemView.setOnClickListener(v -> {
-            if(mIsEnable){
-                clickItem(holder);
-            }
-        });
-        if(mIsSelectAll){
-            holder.cardView.setCardBackgroundColor(0x60000000);
-        }
-        else{
-            holder.cardView.setCardBackgroundColor(Color.TRANSPARENT);
-        }
-        holder.setData(note);
-        holder.imageView.setImageDrawable(null);
-        if(note.getImgUri() != null){
-            Glide.with(holder.itemView.getContext())
-                    .load(note.getImgUri())
-                    .error(R.drawable.reload)
-                    .into(holder.imageView);
-        }
+    public RecycleBinAdapter(List<Note> data, Activity activity, NoteViewModel noteViewModel) {
+        super(data, activity, noteViewModel);
     }
-    private void clickItem(RecycleBinAdapter.ViewHolder holder) {
-        Note note = mData.get(holder.getAdapterPosition());
-        if(holder.cardView.getCardBackgroundColor().getDefaultColor() != 0x60000000){
-            holder.cardView.setCardBackgroundColor(0x60000000);
-            mSelectedNotes.add(note);
-        }else{
-            holder.cardView.setCardBackgroundColor(Color.TRANSPARENT);
-            mSelectedNotes.remove(note);
-        }
-        mSizeViewModel.setText(String.valueOf(mSelectedNotes.size()));
+
+    @Override
+    protected boolean handleActionItemClick(ActionMode mode, MenuItem item, List<Note> selectedNotesCopy, List<Note> allNotes) {
+        return handleSpecificActionItemClick(mode, item, selectedNotesCopy, allNotes);
     }
     @Override
-    public int getItemCount() {
-        return mData.size();
+    protected int getListItemLayoutResId() {
+        return R.layout.note_item_list; // Uses the same layout
     }
-    public void setmData(List<Note> newData){
-        if(mData != null){
-            mData.clear();
-            mData.addAll(newData);
-            notifyDataSetChanged();
-        }else{
-            mData = newData;
+
+    @Override
+    protected RecycleBinViewHolder createViewHolder(View view) {
+        return new RecycleBinViewHolder(view);
+    }
+
+    @Override
+    protected int getActionModeMenuResId() {
+        return R.menu.bin_menu;
+    }
+
+    @Override
+    protected String getActionModeTitleSuffix() {
+        return " seleccionados"; // Or specific suffix for recycle bin
+    }
+
+    @Override
+    protected boolean handleSpecificActionItemClick(ActionMode mode, MenuItem item, List<Note> selectedNotes, List<Note> allNotes) {
+        int id = item.getItemId();
+        if (id == R.id.menu_effective_delete) {
+            for (Note n : selectedNotes) { // Iterate over the copy
+                mNoteViewModel.delete(n);
+            }
+            mode.finish();
+            return true;
+        } else if (id == R.id.menu_restore) {
+            for (Note n : selectedNotes) { // Iterate over the copy
+                n.setGoingToBeDeleted(false);
+                mNoteViewModel.update(n);
+            }
+            mode.finish();
+            return true;
         }
+
+        return false;
     }
-    public List<Note> getmData(){
-        return mData;
+
+    @Override
+    protected void handleRegularItemClick(Note note, int position) {
+        // No action for regular click in RecycleBinAdapter
     }
-    public RecycleBinAdapter(List<Note> data, Activity activity, NoteViewModel noteViewModel){
-        this.mActivity = activity;
-        this.mData = data;
-        this.mNoteViewModel = noteViewModel;
+
+    @Override
+    protected void bindSpecificData(RecycleBinViewHolder holder, Note note) {
+        // If R.layout.note_item_list contains views specific to NoteAdapter (like reminder date, location icon),
+        // ensure they are hidden for RecycleBinAdapter items.
+        // BaseViewHolder only binds title, content, and image.
+        // If specific views like audio_icon, loc, remind_date from R.layout.note_item_list
+        // are not part of RecycleBinViewHolder, they won't be touched.
+        // If they ARE part of the layout and should be hidden:
+        View audioIcon = holder.itemView.findViewById(R.id.audio_icon);
+        if (audioIcon != null) audioIcon.setVisibility(View.GONE);
+
+        View locationView = holder.itemView.findViewById(R.id.loc);
+        if (locationView != null) locationView.setVisibility(View.GONE);
+
+        View remindDateView = holder.itemView.findViewById(R.id.remind_date);
+        if (remindDateView != null) remindDateView.setVisibility(View.GONE);
     }
-    static public class ViewHolder extends RecyclerView.ViewHolder {
-        private final TextView title;
-        private final TextView content;
-        private final ImageView imageView;
-        private final CardView cardView;
-        public ViewHolder(@NonNull View itemView) {
+
+    // --- Inner ViewHolder for RecycleBinAdapter ---
+    public static class RecycleBinViewHolder extends BaseAdapter.BaseViewHolder {
+        public RecycleBinViewHolder(@NonNull View itemView) {
             super(itemView);
-            title = itemView.findViewById(R.id.note_title);
-            content = itemView.findViewById(R.id.note_content);
-            imageView = itemView.findViewById(R.id.img);
-            cardView = itemView.findViewById(R.id.cv);
-        }
-        public void setData(Note note) {
-            title.setText(note.getTitle());
-            content.setText(note.getContent());
+            // No additional views beyond what BaseViewHolder provides
         }
     }
 }

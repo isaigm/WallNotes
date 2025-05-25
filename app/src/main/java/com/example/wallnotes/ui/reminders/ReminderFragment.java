@@ -35,7 +35,7 @@ public class ReminderFragment extends Fragment {
         mNoteViewModel = new ViewModelProvider(this).get(NoteViewModel.class);
         List<Note> data = new ArrayList<>();
         mAdapter = new NoteAdapter(data, getActivity(), mNoteViewModel);
-        mNoteViewModel.getReminders().observe(getViewLifecycleOwner(), notes -> mAdapter.setmData(notes));
+        mNoteViewModel.getReminders().observe(getViewLifecycleOwner(), notes -> mAdapter.setDataList(notes));
         mRecyclerview.setAdapter(mAdapter);
         mRecyclerview.setLayoutManager(new LinearLayoutManager(getActivity()));
         final TextView tvReminder = root.findViewById(R.id.text_reminder);
@@ -107,11 +107,11 @@ public class ReminderFragment extends Fragment {
     }
     void getNotesFromDb(String text) {
         mNoteViewModel.search(text).observe(this, notes -> {
-            if(text.length() > 0)
+            if(!text.isEmpty())
             {
-                mAdapter.setmData(notes);
+                mAdapter.setDataList(notes);
             }else{
-                mAdapter.setmData(mNoteViewModel.getReminders().getValue());
+                mAdapter.setDataList(mNoteViewModel.getReminders().getValue());
             }
         });
     }
