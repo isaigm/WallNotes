@@ -1,13 +1,6 @@
 package com.example.wallnotes;
-
-
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent; // Needed for NoteAdapter, but base can be agnostic
-import android.graphics.Color;
-import android.os.Build;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -18,17 +11,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -109,12 +100,33 @@ public abstract class BaseAdapter<VH extends BaseAdapter.BaseViewHolder> extends
                     @Override
                     public void onDestroyActionMode(ActionMode mode) {
                         mIsEnable = false;
-                        mIsSelectAll = false;
+                        mIsSelectAll = false; // This ensures onBindViewHolder renders items as not selected
+
+                        // Keep track of which items were selected to update only them
+                        List<Object> previouslySelectedIds = new ArrayList<>();
+                        if (mData != null) { // Ensure mData is not null
+                            for (Note selectedNote : mSelectedNotes) {
+                                // Assuming Note has a getUid() method returning a unique ID (e.g., long, String)
+                                previouslySelectedIds.add(selectedNote.getUid());
+                            }
+                        }
+
                         mSelectedNotes.clear();
                         if (mSizeViewModel != null) {
                             mSizeViewModel.setText("0"); // Reset count
                         }
-                        notifyDataSetChanged();
+
+                        // Notify changes only for the items that were deselected
+                        if (mData != null) {
+                            for (int i = 0; i < mData.size(); i++) {
+                                Note currentNote = mData.get(i);
+                                // Check if this note was in the previouslySelectedIds list
+                                if (previouslySelectedIds.contains(currentNote.getUid())) {
+                                    notifyItemChanged(i);
+                                }
+                            }
+                        }
+                        // If no items were selected, or mData is null, no notifications are sent.
                     }
                 };
                 ((AppCompatActivity) v.getContext()).startActionMode(callback);
@@ -138,7 +150,6 @@ public abstract class BaseAdapter<VH extends BaseAdapter.BaseViewHolder> extends
     protected void clickItem(VH holder, Note note) {
         int defaultColor = getDefaultItemBackgroundColor(holder.itemView.getContext());
         int selectedColor = getSelectedItemBackgroundColor(holder.itemView.getContext());
-
         if (mSelectedNotes.contains(note)) {
             mSelectedNotes.remove(note);
             holder.updateSelectionVisuals(false, defaultColor, selectedColor);
@@ -149,43 +160,48 @@ public abstract class BaseAdapter<VH extends BaseAdapter.BaseViewHolder> extends
         if (mSizeViewModel != null) {
             mSizeViewModel.setText(String.valueOf(mSelectedNotes.size()));
         }
-        // If all items are deselected, and mIsSelectAll was true, it should be up to
-        // the "Select All" action to manage its state. mIsSelectAll is primarily for bulk selection.
-        // If user deselects all items one by one, action mode might be exited or "Select All" state updated by its own logic.
     }
-
     public void setDataList(List<Note> newData) {
-        if (this.mData == null) {
-            this.mData = new ArrayList<>();
-        }
-        this.mData.clear();
-        if (newData != null) {
-            this.mData.addAll(newData);
-        }
+        final List<Note> oldNotes = new ArrayList<>(this.mData); // Current data becomes old data
+        final List<Note> newNotesList = (newData == null) ? new ArrayList<>() : new ArrayList<>(newData); // Use a mutable copy of new data
 
+        // Calculate the diff
+        NoteDiffCallback diffCallback = new NoteDiffCallback(oldNotes, newNotesList);
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
+
+        // Update the internal data list *before* dispatching updates
+        this.mData.clear();
+        this.mData.addAll(newNotesList);
+
+        // Reconcile selected notes based on the new mData
         if (mIsEnable) {
             List<Note> stillPresentSelectedNotes = new ArrayList<>();
-            for (Note selectedNote : mSelectedNotes) {
-                boolean found = false;
-                for (Note currentNote : this.mData) { // this.mData is the new list
-                    // Assuming Note has a getUid() that's unique and reliable for comparison,
-                    // or a proper equals() method.
-                    if (currentNote.getUid() == selectedNote.getUid()) {
-                        found = true;
+            // Iterate over a copy of mSelectedNotes to avoid concurrent modification issues if needed,
+            // though here we are rebuilding it.
+            List<Note> currentSelectedCopy = new ArrayList<>(mSelectedNotes);
+            mSelectedNotes.clear();
+
+            for (Note previouslySelectedNote : currentSelectedCopy) {
+                for (Note newNoteInDataSet : this.mData) { // Check against the new dataset
+                    // Assuming Note has a getUid() for unique and reliable comparison
+                    if (newNoteInDataSet.getUid() == previouslySelectedNote.getUid()) {
+                        stillPresentSelectedNotes.add(newNoteInDataSet); // Add instance from the new list
                         break;
                     }
                 }
-                if (found) {
-                    stillPresentSelectedNotes.add(selectedNote);
-                }
             }
-            mSelectedNotes.clear();
             mSelectedNotes.addAll(stillPresentSelectedNotes);
             if (mSizeViewModel != null) {
                 mSizeViewModel.setText(String.valueOf(mSelectedNotes.size()));
             }
+            // Items that were selected but are no longer in the list will be removed from mSelectedNotes.
+            // Items that were selected and are still in the list remain selected.
+            // The DiffResult will handle notifying changes for items whose content might have changed,
+            // and onBindViewHolder will update their selection visuals.
         }
-        notifyDataSetChanged();
+
+        // Dispatch the calculated diff to the adapter
+        diffResult.dispatchUpdatesTo(this);
     }
 
     @Override
@@ -195,10 +211,6 @@ public abstract class BaseAdapter<VH extends BaseAdapter.BaseViewHolder> extends
 
     public List<Note> getDataList() {
         return mData;
-    }
-
-    protected List<Note> getSelectedNotes() {
-        return mSelectedNotes;
     }
 
     protected abstract boolean handleActionItemClick(ActionMode mode, MenuItem item, List<Note> selectedNotesCopy, List<Note> allNotes);

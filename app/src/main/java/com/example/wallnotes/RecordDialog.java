@@ -4,10 +4,9 @@ import android.Manifest;
 import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
-import android.media.MediaRecorder; // Import nativo
+import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import java.io.File;
@@ -25,21 +24,13 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.DialogFragment;
-
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-// Se elimina org.jetbrains.annotations.NotNull si no es estrictamente necesario por otra dependencia
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
-// Se eliminan las importaciones de OmRecorder
-// import omrecorder.AudioRecordConfig;
-// import omrecorder.OmRecorder;
-// import omrecorder.PullTransport;
-// import omrecorder.PullableSource;
-// import omrecorder.Recorder;
 
 public class RecordDialog extends DialogFragment {
     private static final String LOG_TAG = "RecordDialog";

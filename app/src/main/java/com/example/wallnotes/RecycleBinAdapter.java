@@ -1,16 +1,10 @@
 package com.example.wallnotes;
 
 import android.app.Activity;
-import android.content.Context;
-import android.graphics.Color;
-import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.MenuItem;
 import android.view.View;
-// Import other necessary classes like Note, NoteViewModel, SizeViewModel, R, etc.
-// These should be available from the package or common Android/androidx libraries.
 import androidx.annotation.NonNull;
-
 import java.util.List;
 
 public class RecycleBinAdapter extends BaseAdapter<RecycleBinAdapter.RecycleBinViewHolder> {

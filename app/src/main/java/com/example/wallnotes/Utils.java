@@ -1,5 +1,6 @@
 package com.example.wallnotes;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
@@ -25,10 +26,10 @@ public class Utils {
             return value + "";
         }
     }
+    @SuppressLint("NotifyDataSetChanged")
     public static void runLayoutAnimation(final RecyclerView recyclerView) {
         final Context context = recyclerView.getContext();
-        final LayoutAnimationController controller =
-                AnimationUtils.loadLayoutAnimation(context, R.anim.animation_layout);
+        final LayoutAnimationController controller = AnimationUtils.loadLayoutAnimation(context, R.anim.animation_layout);
         recyclerView.setLayoutAnimation(controller);
         Objects.requireNonNull(recyclerView.getAdapter()).notifyDataSetChanged();
         recyclerView.scheduleLayoutAnimation();

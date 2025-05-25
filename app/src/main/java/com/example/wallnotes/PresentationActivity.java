@@ -1,6 +1,5 @@
 package com.example.wallnotes;
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -16,7 +15,7 @@ public class PresentationActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_presentation);
-        setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         viewFlipper = findViewById(R.id.viewFlipper);
         RadioButton rb1 = findViewById(R.id.rb1);
         RadioButton rb2 = findViewById(R.id.rb2);
