@@ -35,6 +35,9 @@
         <!-- <item name="android:statusBarColor" tools:targetApi="l">@color/dark_custom_surface</item> -->
 
 
+        <item name="cardItemBackgroundSelected">#60FFFFFF</item>
+        <item name="cardItemBackgroundDefault">@android:color/transparent</item>
+
         <!-- Control sobre los iconos de la Barra de Estado (para que sean claros sobre fondo oscuro) -->
         <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
 

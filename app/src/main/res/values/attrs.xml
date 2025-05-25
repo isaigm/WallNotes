@@ -5,4 +5,8 @@
     </declare-styleable>
     <attr name="navItemIconTint" format="reference|color" />
     <attr name="navItemTextColor" format="reference|color" />
+
+    <attr name="cardItemBackgroundSelected" format="color" />
+    <attr name="cardItemBackgroundDefault" format="color" />
+
 </resources>

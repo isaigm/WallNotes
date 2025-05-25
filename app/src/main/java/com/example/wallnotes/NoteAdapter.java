@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -54,6 +55,35 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Note note = mData.get(position);
+
+
+        TypedValue typedValueDefault = new TypedValue();
+        Context context = holder.itemView.getContext();
+        context.getTheme().resolveAttribute(R.attr.cardItemBackgroundDefault, typedValueDefault, true);
+        int defaultBackgroundColor = typedValueDefault.data;
+
+        // Resolve selected color from theme
+        TypedValue typedValueSelected = new TypedValue();
+        context.getTheme().resolveAttribute(R.attr.cardItemBackgroundSelected, typedValueSelected, true);
+        int selectedBackgroundColor = typedValueSelected.data;
+
+
+        if (mIsSelectAll || mSelectedNotes.contains(note)) { // Added check for mSelectedNotes
+            holder.cardView.setCardBackgroundColor(selectedBackgroundColor);
+        } else {
+            holder.cardView.setCardBackgroundColor(defaultBackgroundColor);
+        }
+
+        if (note.getImgUri() != null) {
+            Glide.with(holder.itemView.getContext())
+                    .load(note.getImgUri())
+                    .error(R.drawable.reload)
+                    .into(holder.imageView);
+        } else {
+            holder.imageView.setImageDrawable(null); // Clear image if URI is null
+        }
+        holder.setData(note); // Call setData after background and image handling
+
         holder.itemView.setOnLongClickListener(v -> {
             if(!mIsEnable){
                ActionMode.Callback callback = new ActionMode.Callback() {
@@ -142,11 +172,25 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> {
 
     private void clickItem(ViewHolder holder) {
         Note note = mData.get(holder.getAdapterPosition());
-        if(holder.cardView.getCardBackgroundColor().getDefaultColor() != 0x60000000){
-            holder.cardView.setCardBackgroundColor(0x60000000);
+
+        // Resolve colors from theme
+        TypedValue typedValueSelected = new TypedValue();
+        TypedValue typedValueDefault = new TypedValue();
+        Context context = holder.itemView.getContext();
+        context.getTheme().resolveAttribute(R.attr.cardItemBackgroundSelected, typedValueSelected, true);
+        context.getTheme().resolveAttribute(R.attr.cardItemBackgroundDefault, typedValueDefault, true);
+
+        int selectedColor = typedValueSelected.data;
+        int defaultColor = typedValueDefault.data;
+
+        // Check current background color by comparing with the resolved default color
+        // Note: CardView.getCardBackgroundColor() returns a ColorStateList.
+        // For a simple solid color, getDefaultColor() is usually sufficient.
+        if (holder.cardView.getCardBackgroundColor().getDefaultColor() != selectedColor) {
+            holder.cardView.setCardBackgroundColor(selectedColor);
             mSelectedNotes.add(note);
-        }else{
-            holder.cardView.setCardBackgroundColor(Color.TRANSPARENT);
+        } else {
+            holder.cardView.setCardBackgroundColor(defaultColor);
             mSelectedNotes.remove(note);
         }
         mSizeViewModel.setText(String.valueOf(mSelectedNotes.size()));
