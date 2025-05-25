@@ -28,15 +28,19 @@ import java.util.List;
 
 public class RecycleBinFragment extends Fragment {
 
-    private RecycleBinAdapter mRecycleBinAdapter;
+    private RecycleBinAdapter mAdapter;
     private NoteViewModel mNoteViewModel;
     private RecyclerView.AdapterDataObserver mObserver;
-    private TextView tv;
+    private TextView mEmptyStateTextView;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_recyclebin, container, false);
+        View root = inflater.inflate(R.layout.fragment_recyclebin, container, false);
+
+        mEmptyStateTextView = root.findViewById(R.id.text_bin);
+
+        return root;
     }
 
     @Override
@@ -48,24 +52,60 @@ public class RecycleBinFragment extends Fragment {
         mRecyclerview.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
 
         List<Note> data = new ArrayList<>();
-        mRecycleBinAdapter = new RecycleBinAdapter(data, getActivity(), mNoteViewModel);
-        mNoteViewModel.getNotesToBeDeleted().observe(getViewLifecycleOwner(), mRecycleBinAdapter::setDataList);
-        mRecyclerview.setAdapter(mRecycleBinAdapter);
+        mAdapter = new RecycleBinAdapter(data, getActivity(), mNoteViewModel);
+        mNoteViewModel.getNotesToBeDeleted().observe(getViewLifecycleOwner(), mAdapter::setDataList);
+        mRecyclerview.setAdapter(mAdapter);
 
-        tv = view.findViewById(R.id.text_bin);
         mObserver = new RecyclerView.AdapterDataObserver() {
+            private void updateEmptyViewVisibility() {
+
+                if (mAdapter == null || mEmptyStateTextView == null) {
+                    return;
+                }
+                if (mAdapter.getItemCount() > 0) {
+                    mEmptyStateTextView.setVisibility(View.INVISIBLE);
+                } else {
+                    mEmptyStateTextView.setVisibility(View.VISIBLE);
+                }
+            }
             @Override
             public void onChanged() {
                 super.onChanged();
-                if (mRecycleBinAdapter.getItemCount() > 0) {
-                    tv.setVisibility(View.INVISIBLE);
-                } else {
-                    tv.setVisibility(View.VISIBLE);
-                }
+                updateEmptyViewVisibility();
+            }
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                super.onItemRangeInserted(positionStart, itemCount);
+                updateEmptyViewVisibility();
+            }
+            @Override
+            public void onItemRangeRemoved(int positionStart, int itemCount) {
+                super.onItemRangeRemoved(positionStart, itemCount);
+                updateEmptyViewVisibility();
+            }
+            @Override
+            public void onItemRangeMoved(int fromPosition, int toPosition, int itemCount) {
+                super.onItemRangeMoved(fromPosition, toPosition, itemCount);
+                updateEmptyViewVisibility();
+            }
+            @Override
+            public void onItemRangeChanged(int positionStart, int itemCount) {
+                super.onItemRangeChanged(positionStart, itemCount);
+                updateEmptyViewVisibility();
+            }
+            @Override
+            public void onItemRangeChanged(int positionStart, int itemCount, @Nullable Object payload) {
+                super.onItemRangeChanged(positionStart, itemCount, payload);
+                updateEmptyViewVisibility();
             }
         };
+        if (mAdapter.getItemCount() > 0) {
+            mEmptyStateTextView.setVisibility(View.INVISIBLE);
+        } else {
+            mEmptyStateTextView.setVisibility(View.VISIBLE);
+        }
 
-        mRecycleBinAdapter.registerAdapterDataObserver(mObserver);
+        mAdapter.registerAdapterDataObserver(mObserver);
 
         requireActivity().addMenuProvider(new MenuProvider() {
             @Override
@@ -76,7 +116,7 @@ public class RecycleBinFragment extends Fragment {
             public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
                 if (menuItem.getItemId() == R.id.delete_notes) {
                     Log.d("RecycleBinFragment", "onMenuItemSelected: delete_notes");
-                    List<Note> data = mRecycleBinAdapter.getDataList();
+                    List<Note> data = mAdapter.getDataList();
                     if (data != null) {
                         if (data.isEmpty()) {
                             Utils.showMessage(requireContext(), "No hay más notas por eliminar");
@@ -109,8 +149,8 @@ public class RecycleBinFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        if (mRecycleBinAdapter != null && mObserver != null) {
-            mRecycleBinAdapter.unregisterAdapterDataObserver(mObserver);
+        if (mAdapter != null && mObserver != null) {
+            mAdapter.unregisterAdapterDataObserver(mObserver);
         }
         super.onDestroyView();
     }
