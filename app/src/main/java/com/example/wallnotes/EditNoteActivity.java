@@ -36,6 +36,7 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -168,9 +169,9 @@ public class EditNoteActivity extends AppCompatActivity {
                 mTvLocation.setVisibility(View.VISIBLE);
                 mTvLocation.setText(mLocation);
             }
-            if (mRemindDate != null) {
-                setRemindDate();
-            }
+
+            setRemindDate();
+
             mUpdate = true;
         }
         bottomAppBar.setOnMenuItemClickListener(item -> {
@@ -201,7 +202,6 @@ public class EditNoteActivity extends AppCompatActivity {
                 if (mCurrNote != null) {
                     if (mCurrNote.getRemindDate() != null) {
                         cancelAlarm();
-                        mRemindDate = null;
                         mTv.setVisibility(View.GONE);
                         mTv.setText("");
                     } else {
@@ -541,7 +541,14 @@ public class EditNoteActivity extends AppCompatActivity {
     }
     void createAlarm() {
         final Calendar newCalender = Calendar.getInstance();
-        DatePickerDialog dialog = new DatePickerDialog(EditNoteActivity.this, (view, year, month, dayOfMonth) -> {
+        Context context = this; // o getActivity()
+
+// Obtener el ID del estilo del DatePickerDialog desde el tema actual de la actividad
+        TypedValue outValue = new TypedValue();
+        context.getTheme().resolveAttribute(R.attr.appDatePickerDialogTheme, outValue, true);
+        int datePickerDialogThemeResId = outValue.resourceId;
+
+        DatePickerDialog dialog = new DatePickerDialog(EditNoteActivity.this, datePickerDialogThemeResId, (view, year, month, dayOfMonth) -> {
             final Calendar newDate = Calendar.getInstance();
             Calendar newTime = Calendar.getInstance();
             TimePickerDialog time = new TimePickerDialog(EditNoteActivity.this, (view1, hourOfDay, minute) -> {
@@ -595,10 +602,7 @@ public class EditNoteActivity extends AppCompatActivity {
                                     .setMessage("Para establecer recordatorios precisos, WallNotes necesita permiso para programar alarmas exactas. ¿Deseas ir a la configuración para concederlo?")
                                     .setPositiveButton("Ir a Configuración", (dialogInterface, i) -> {
                                         Intent permissionIntent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
-                                        // Para mayor especificidad, puedes añadir el paquete de tu app.
-                                        // Esto puede ayudar en algunos dispositivos a ir directamente a tu app.
-                                        // Uri uri = Uri.fromParts("package", getPackageName(), null);
-                                        // permissionIntent.setData(uri);
+
                                         try {
                                             startActivity(permissionIntent);
                                             Utils.showMessage(EditNoteActivity.this, "Por favor, activa el permiso para 'WallNotes' y luego intenta agregar el recordatorio de nuevo.");
@@ -611,7 +615,6 @@ public class EditNoteActivity extends AppCompatActivity {
                                         Utils.showMessage(this, "El recordatorio no se pudo agregar sin el permiso.");
                                     })
                                     .show();
-                            // No se programó la alarma, así que no actualices mRemindDate ni la UI relacionada.
                         }
                     } else {
                         // Para versiones anteriores a Android S (API 31)
@@ -628,10 +631,10 @@ public class EditNoteActivity extends AppCompatActivity {
                 } else {
                     Utils.showMessage(this, "Tiempo inválido. Por favor, selecciona una fecha y hora en el futuro.");
                 }
-            }, newTime.get(Calendar.HOUR_OF_DAY), newTime.get(Calendar.MINUTE), true); // true para formato 24 horas
+            }, newTime.get(Calendar.HOUR_OF_DAY), newTime.get(Calendar.MINUTE), true);
             time.show();
         }, newCalender.get(Calendar.YEAR), newCalender.get(Calendar.MONTH), newCalender.get(Calendar.DAY_OF_MONTH));
-        dialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000); // Permite seleccionar el día actual
+        dialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
         dialog.show();
     }
     private void observeNote() {
@@ -639,21 +642,13 @@ public class EditNoteActivity extends AppCompatActivity {
 
         mCurrentNoteLiveData.observe(this, note -> {
             if (note != null) {
-                mCurrNote = note; // Actualiza tu variable mCurrNote
+                mCurrNote = note;
                 mTitle.setText(note.getTitle());
                 mContent.setText(note.getContent());
-                // LÓGICA CLAVE: Actualizar la UI del recordatorio
-                mRemindDate = note.getRemindDate(); // Actualizar mRemindDate
-                if (mRemindDate != null) {
-                    setRemindDate(); // Tu método que muestra la fecha en mTv
-                    mTv.setVisibility(View.VISIBLE);
-                } else {
-                    mTv.setText(""); // Limpia el TextView
-                    mTv.setVisibility(View.GONE); // Oculta el TextView
-                }
+                mRemindDate = note.getRemindDate();
+                setRemindDate();
                 mUpdate = true;
             } else {
-                // La nota fue eliminada o no se encontró
                 Log.w("EditNoteActivity", "La nota con ID " + mCurrentNoteId + " ya no existe.");
                 finish();
             }

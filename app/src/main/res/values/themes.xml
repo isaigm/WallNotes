@@ -12,6 +12,8 @@
         <item name="colorOnPrimary">@color/white</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/teal_200</item>
+        <item name="appDatePickerDialogTheme">@style/MyAlertDialogTheme.Light</item>
+
         <item name="colorSecondaryVariant">@color/teal_700</item>
         <item name="colorOnSecondary">@color/black</item>
         <item name="colorOutline">@color/dark_custom_outline</item>
@@ -31,6 +33,8 @@
         <item name="navItemTextColor">@color/navigation_item_text_tint_light</item>
         <item name="cardItemBackgroundSelected">#60000000</item>
         <item name="cardItemBackgroundDefault">@android:color/transparent</item>
+        <item name="appDatePickerDialogTheme">@style/MyAlertDialogTheme.Light</item>
+
         <item name="popupTheme">@style/MyPopupMenu.Light</item>
 
     </style>
@@ -40,6 +44,7 @@
 
         <item name="cardItemBackgroundSelected">#60000000</item>
         <item name="cardItemBackgroundDefault">@android:color/transparent</item>
+        <item name="appDatePickerDialogTheme">@style/MyAlertDialogTheme.Light</item>
 
         <item name="windowActionModeOverlay">true</item>
         <item name="colorPrimary">@color/blue_primary</item> <!-- e.g., @color/md_blue_500 -->
@@ -71,7 +76,8 @@
         <item name="colorOutline">@color/dark_custom_outline</item>
         <item name="navItemIconTint">@color/navigation_item_text_tint_light</item>
         <item name="navItemTextColor">@color/navigation_item_text_tint_light</item>
-        <!-- Secondary brand color. -->
+        <item name="appDatePickerDialogTheme">@style/MyAlertDialogTheme.Light</item>
+
         <item name="colorSecondary">@color/blue</item>
         <item name="colorSecondaryVariant">@color/blue_dark</item>
         <item name="colorOnSecondary">@color/black</item>

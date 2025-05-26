@@ -67,7 +67,6 @@ public abstract class BaseAdapter<VH extends BaseAdapter.BaseViewHolder> extends
                         menuInflater.inflate(getActionModeMenuResId(), menu);
                         return true;
                     }
-
                     @Override
                     public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
                         mIsEnable = true;
@@ -80,7 +79,6 @@ public abstract class BaseAdapter<VH extends BaseAdapter.BaseViewHolder> extends
                                 mSizeViewModel.setText(String.valueOf(mSelectedNotes.size()));
                             }
                         }
-
                         if (mSizeViewModel != null && mActivity instanceof LifecycleOwner) {
                             mSizeViewModel.getText().observe((LifecycleOwner) mActivity,
                                     s -> {

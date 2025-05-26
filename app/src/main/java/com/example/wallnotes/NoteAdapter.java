@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,6 +17,9 @@ import androidx.annotation.NonNull;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
+// Asumimos que BaseAdapter extiende o es un RecyclerView.Adapter
+// import androidx.recyclerview.widget.RecyclerView;
+
 public class NoteAdapter extends BaseAdapter<NoteAdapter.NoteViewHolder> {
 
     public NoteAdapter(List<Note> data, Activity activity, NoteViewModel noteViewModel) {
@@ -26,11 +28,6 @@ public class NoteAdapter extends BaseAdapter<NoteAdapter.NoteViewHolder> {
 
     @Override
     protected boolean handleActionItemClick(ActionMode mode, MenuItem item, List<Note> selectedNotesCopy, List<Note> allNotes) {
-        // Common "Select All" logic if R.id.menu_select_all is used by both
-        // Ensure R.id.menu_select_all exists or this will throw a NullPointerException if item.getItemId() matches an ID not present
-        // It might be safer to check for specific known common IDs.
-        // For now, assuming R.id.menu_select_all is the common ID if this functionality is shared.
-        // If not, this part should be in handleSpecificActionItemClick or made conditional.
         if (item.getItemId() == R.id.menu_select_all) { // Example: common select all ID
             if (mSelectedNotes.size() == mData.size()) { // All are selected, so deselect all
                 mIsSelectAll = false;
@@ -45,7 +42,25 @@ public class NoteAdapter extends BaseAdapter<NoteAdapter.NoteViewHolder> {
             if (mSizeViewModel != null) {
                 mSizeViewModel.setText(String.valueOf(mSelectedNotes.size()));
             }
-            notifyDataSetChanged();
+
+            // Reemplazar notifyDataSetChanged()
+            // notifyDataSetChanged(); // Método anterior, desaconsejado para RecyclerView
+
+            // Nuevo método: notificar que el rango de elementos ha cambiado.
+            // Esto es más eficiente y permite animaciones.
+            // Asumimos que mData contiene todos los elementos actualmente en el adaptador.
+            // Si tu BaseAdapter tiene un método como getItemCount(), es preferible usarlo.
+            if (mData != null) {
+                notifyItemRangeChanged(0, mData.size());
+            } else {
+                // Si mData es null, podría significar una lista vacía.
+                // Notificar un rango de 0 o manejar según la lógica de tu app.
+                notifyItemRangeChanged(0, 0);
+            }
+            // Alternativamente, si tu BaseAdapter implementa getItemCount()
+            // y este refleja correctamente el tamaño de la lista (incluso si mData es null):
+            // notifyItemRangeChanged(0, getItemCount());
+
             return true;
         }
         return handleSpecificActionItemClick(mode, item, selectedNotesCopy, allNotes);
@@ -81,14 +96,10 @@ public class NoteAdapter extends BaseAdapter<NoteAdapter.NoteViewHolder> {
                 note.setRemindDate(null);
                 mNoteViewModel.update(note);
             }
-            // mSelectedNotes from base class is cleared in onDestroyActionMode
-            // or should be cleared here if mode doesn't finish immediately for all actions
-            mode.finish(); // Finishes action mode
+            mode.finish();
             return true;
         }
-        // "Select All" is handled by the base class if R.id.menu_select_all is the ID in submenu.xml
-        // If R.id.menu_select_all is handled here, ensure base class logic for it is not duplicated or is bypassed.
-        return false; // Return false if not handled here, allowing base to try (if base has more common items)
+        return false;
     }
 
     @Override
@@ -101,13 +112,13 @@ public class NoteAdapter extends BaseAdapter<NoteAdapter.NoteViewHolder> {
 
     @Override
     protected void bindSpecificData(NoteViewHolder holder, Note note) {
-        // Reset visibility for recycled views
         holder.location.setVisibility(View.GONE);
         holder.icon.setVisibility(View.GONE);
         holder.remindDate.setVisibility(View.GONE);
 
         if (note.getRemindDate() != null) {
-            @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFor = new SimpleDateFormat("dd/MM/yyyy hh:mm");
+            SimpleDateFormat dateFor = new SimpleDateFormat("dd/MM/yyyy hh:mm");
+            Log.d("DATE", dateFor.format(note.getRemindDate()));
             holder.remindDate.setVisibility(View.VISIBLE);
             holder.remindDate.setText(dateFor.format(note.getRemindDate()));
         }
@@ -145,7 +156,6 @@ public class NoteAdapter extends BaseAdapter<NoteAdapter.NoteViewHolder> {
         }
     }
 
-    // --- Inner ViewHolder for NoteAdapter ---
     public static class NoteViewHolder extends BaseAdapter.BaseViewHolder {
         private final TextView remindDate;
         private final TextView location;

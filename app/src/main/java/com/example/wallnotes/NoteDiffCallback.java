@@ -1,5 +1,4 @@
 package com.example.wallnotes;
-
 import androidx.recyclerview.widget.DiffUtil;
 import java.util.List;
 import java.util.Objects;
@@ -13,7 +12,6 @@ public class NoteDiffCallback extends DiffUtil.Callback {
         this.oldList = oldList;
         this.newList = newList;
     }
-
     @Override
     public int getOldListSize() {
         return oldList.size();
@@ -26,8 +24,6 @@ public class NoteDiffCallback extends DiffUtil.Callback {
 
     @Override
     public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-        // Implement this based on a unique, stable ID in your Note class
-        // Assuming Note has a getUid() method that returns a unique identifier (e.g., long, String, int)
         return oldList.get(oldItemPosition).getUid() == newList.get(newItemPosition).getUid();
     }
 
@@ -36,12 +32,12 @@ public class NoteDiffCallback extends DiffUtil.Callback {
         Note oldNote = oldList.get(oldItemPosition);
         Note newNote = newList.get(newItemPosition);
 
-        // Compare all relevant fields that affect the visual representation of the Note.
-        // Using Objects.equals for null-safety.
         return Objects.equals(oldNote.getTitle(), newNote.getTitle()) &&
                 Objects.equals(oldNote.getContent(), newNote.getContent()) &&
-                Objects.equals(oldNote.getImgUri(), newNote.getImgUri());
-        // Add comparisons for any other fields that, if changed, should trigger a rebind.
+                Objects.equals(oldNote.getImgUri(), newNote.getImgUri()) &&
+                Objects.equals(oldNote.getLocation(), newNote.getLocation()) &&
+                Objects.equals(oldNote.getAudio(), newNote.getAudio()) &&
+                Objects.equals(oldNote.getRemindDate(), newNote.getRemindDate());
     }
 
     // Optional: Implement getChangePayload for more granular updates if specific fields change.

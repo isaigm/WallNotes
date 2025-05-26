@@ -39,6 +39,7 @@
 
         <item name="cardItemBackgroundSelected">#60FFFFFF</item>
         <item name="cardItemBackgroundDefault">@android:color/transparent</item>
+        <item name="appDatePickerDialogTheme">@style/MyAlertDialogTheme.Dark</item>
 
         <!-- Control sobre los iconos de la Barra de Estado (para que sean claros sobre fondo oscuro) -->
         <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
@@ -52,13 +53,9 @@
 
         <!-- Color del texto por defecto en la Toolbar (si usas una Toolbar) -->
         <!-- Los TextAppearances de la Toolbar deberían manejar esto, pero puedes forzarlo -->
-        <item name="android:textColorPrimary">?attr/colorOnPrimary</item> <!-- O ?attr/colorOnSurface si la Toolbar usa colorSurface -->
         <item name="navItemIconTint">@color/navigation_item_text_tint_dark</item>
         <item name="navItemTextColor">@color/navigation_item_text_tint_dark</item>
-        <!-- Para el color del título de la Toolbar -->
         <item name="toolbarStyle">@style/Widget.App.Toolbar</item>
-        <item name="android:textColorSecondary">@color/white</item>
-        <item name="alertDialogTheme">@style/MiAlertDialogTheme.Dark</item>
         <item name="iconTint">@color/icon_tint_dark</item>
 
     </style>
