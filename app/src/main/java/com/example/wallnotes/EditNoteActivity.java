@@ -12,9 +12,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import android.Manifest;
 import android.app.AlarmManager;
-import android.app.DatePickerDialog;
 import android.app.PendingIntent;
-import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -48,6 +46,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.google.android.material.bottomappbar.BottomAppBar;
+import com.google.android.material.datepicker.CalendarConstraints;
+import com.google.android.material.datepicker.DateValidatorPointForward;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -56,6 +60,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.TimeZone;
+
 import static java.text.DateFormat.getDateInstance;
 public class EditNoteActivity extends AppCompatActivity {
     static MediaPlayer mPlayer = null;
@@ -69,8 +75,8 @@ public class EditNoteActivity extends AppCompatActivity {
     private ImageView mImageView;
     private boolean mUpdate = false;
     private Note mCurrNote = null;
-    private String mImgUri = null;
-    private String mPhotoPath = null;
+    private String mImgUri = null; // URI of the image selected (gallery or camera)
+    private String mPhotoPath = null; // Absolute path for photos taken with camera
     private NoteRepository mNoteRepository;
     private Date mRemindDate = null;
     private TextView mTv = null;
@@ -80,6 +86,7 @@ public class EditNoteActivity extends AppCompatActivity {
     private String mLocation;
     boolean mPause = false;
     private static final int REQUEST_CODE_POST_NOTIFICATIONS = 101;
+    private static final int REQUEST_CODE_SCHEDULE_EXACT_ALARM_SETTINGS = 102; // For returning from settings
     private static final String TAG_PERMISSION = "EditNoteActivityPerm";
     private LiveData<Note> mCurrentNoteLiveData;
     private int mCurrentNoteId = -1;
@@ -121,16 +128,18 @@ public class EditNoteActivity extends AppCompatActivity {
         mLinearLayout = findViewById(R.id.player);
         BottomAppBar bottomAppBar = findViewById(R.id.bottom_app_bar);
         bottomAppBar.setElevation(0);
-        Log.d("COLOR",  String.format("#%08X", bottomAppBar.getBackgroundTint().getDefaultColor()));
         mNoteRepository = new NoteRepository(getApplication());
         mTitle = findViewById(R.id.title);
         mContent = findViewById(R.id.content);
         mImageView = findViewById(R.id.image);
         mContent.setMovementMethod(new ScrollingMovementMethod());
+
         if (savedInstanceState != null) {
             mImgUri = savedInstanceState.getString("img_uri");
             mLocation = savedInstanceState.getString("location");
             mAudioPath = savedInstanceState.getString("audio");
+            mPhotoPath = savedInstanceState.getString("photo_path"); // Restore photo path
+
             if (mImgUri != null) {
                 loadImage(mImgUri);
             }
@@ -144,53 +153,47 @@ public class EditNoteActivity extends AppCompatActivity {
                 mLinearLayout.setVisibility(View.VISIBLE);
             }
         }
+
         Bundle data = getIntent().getExtras();
         if (data != null) {
             mCurrentNoteId = data.getInt("uid", -1);
             if (mCurrentNoteId != -1) {
+                // Use LiveData for observing changes
                 mCurrentNoteLiveData = mNoteViewModel.getNoteByIdLiveData(mCurrentNoteId);
-                observeNote();
+                observeNote(); // This will populate mCurrNote and UI fields
+            } else {
+                // This case implies a new note, so mCurrNote might remain null until saved.
+                // Initialize mCurrNote to a new Note object or handle null appropriately.
+                mCurrNote = new Note("", "", null); // Or however you handle new notes
+                mUpdate = false;
             }
-            mCurrNote = mNoteRepository.getById(data.getInt("uid"));
-            mRemindDate = mCurrNote.getRemindDate();
-            mTitle.setText(mCurrNote.getTitle());
-            mContent.setText(mCurrNote.getContent());
-            if (mCurrNote.getAudio() != null) {
-                mAudioPath = mCurrNote.getAudio();
-                mLinearLayout.setVisibility(View.VISIBLE);
-            }
-            if (mCurrNote.getImgUri() != null) {
-                loadImage(mCurrNote.getImgUri());
-                mImgUri = mCurrNote.getImgUri();
-            }
-            if(mCurrNote.getLocation() != null)
-            {
-                mLocation = mCurrNote.getLocation();
-                mTvLocation.setVisibility(View.VISIBLE);
-                mTvLocation.setText(mLocation);
-            }
-
-            setRemindDate();
-
-            mUpdate = true;
+        } else {
+            // New note if no data
+            mCurrNote = new Note("", "", null);
+            mUpdate = false;
         }
+
+
         bottomAppBar.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
             if (id == R.id.delete) {
-                if (mUpdate) {
+                if (mUpdate && mCurrNote != null && mCurrNote.getUid() > 0) { // Ensure note is valid and saved
                     if (mRemindDate != null) {
                         cancelAlarm();
                     }
                     mCurrNote.setGoingToBeDeleted(true);
                     mNoteRepository.update(mCurrNote);
                     finish();
+                } else {
+                    // If it's a new note not yet saved, just finish
+                    finish();
                 }
             } else if (id == R.id.add_img) {
+                mPhotoPath = null; // Clear photopath when selecting from gallery
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.setType("image/*");
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(intent, REQUEST_IMAGE);
-                mPhotoPath = null;
 
             } else if (id == R.id.take_photo) {
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -199,16 +202,21 @@ public class EditNoteActivity extends AppCompatActivity {
                     ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA);
                 }
             } else if (id == R.id.cancel_alarm) {
-                if (mCurrNote != null) {
+                if (mCurrNote != null && mCurrNote.getUid() > 0) { // Check if note is valid
                     if (mCurrNote.getRemindDate() != null) {
-                        cancelAlarm();
-                        mTv.setVisibility(View.GONE);
-                        mTv.setText("");
+                        cancelAlarm(); // This will set mRemindDate to null
+                        setRemindDate(); // Update UI
+                        // Persist this change
+                        if (mUpdate) {
+                            mCurrNote.setRemindDate(null);
+                            mNoteRepository.update(mCurrNote);
+                        }
+                        Utils.showMessage(this, "Recordatorio cancelado");
                     } else {
                         Utils.showMessage(this, "Esta nota no tiene recordatorio");
                     }
                 } else {
-                    Utils.showMessage(this, "Acción denegada");
+                    Utils.showMessage(this, "Guarda la nota primero para gestionar recordatorios");
                 }
             } else if (id == R.id.add_audio) {
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
@@ -254,7 +262,8 @@ public class EditNoteActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (mPlayer != null && fromUser) {
-                    mPlayer.seekTo(progress * 1000);
+                    // Assuming progress is now in milliseconds, not seconds
+                    mPlayer.seekTo(progress);
                 }
             }
             @Override
@@ -281,46 +290,74 @@ public class EditNoteActivity extends AppCompatActivity {
         outState.putString("img_uri", mImgUri);
         outState.putString("location", mLocation);
         outState.putString("audio", mAudioPath);
+        outState.putString("photo_path", mPhotoPath); // Save photo path
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
             case REQUEST_IMAGE:
-                if (resultCode == RESULT_OK && data != null && data.getData() != null) { //Añadido data.getData() != null
+                if (resultCode == RESULT_OK && data != null && data.getData() != null) {
                     Uri selectedImageUri = data.getData();
                     try {
-                        final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+                        final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
                         getContentResolver().takePersistableUriPermission(selectedImageUri, takeFlags);
-
                         mImgUri = selectedImageUri.toString();
+                        mPhotoPath = null; // Not a camera photo
                         loadImage(mImgUri);
-
                     } catch (SecurityException e) {
                         Toast.makeText(this, "No se pudo obtener permiso para la imagen.", Toast.LENGTH_SHORT).show();
-                        mImgUri = null;
+                        mImgUri = (mCurrNote != null) ? mCurrNote.getImgUri() : null; // Revert
+                        loadImage(mImgUri);
                     }
+                } else { // Gallery selection cancelled or failed
+                    mImgUri = (mCurrNote != null) ? mCurrNote.getImgUri() : null; // Revert to original or null
+                    loadImage(mImgUri); // Refresh view
                 }
                 break;
             case REQUEST_CAMERA:
                 if (resultCode == RESULT_OK) {
                     if (mPhotoPath != null) {
                         File imageFile = new File(mPhotoPath);
-                        if (imageFile.exists()) {
+                        if (imageFile.exists() && imageFile.length() > 0) { // Check if file is valid
                             Uri photoFileUri = FileProvider.getUriForFile(this,
                                     "com.example.wallnotes.fileprovider",
                                     imageFile);
-                            mImgUri = photoFileUri.toString();
+                            mImgUri = photoFileUri.toString(); // This is the URI for Glide
                             loadImage(mImgUri);
                         } else {
                             Toast.makeText(this, "Error al cargar la foto tomada.", Toast.LENGTH_SHORT).show();
-                            mImgUri = null;
+                            mPhotoPath = null; // Invalidate path
+                            mImgUri = (mCurrNote != null) ? mCurrNote.getImgUri() : null; // Revert
+                            loadImage(mImgUri);
                         }
                     } else {
-                        Toast.makeText(this, "Error al procesar la foto tomada.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Error al procesar la foto tomada (ruta no disponible).", Toast.LENGTH_SHORT).show();
+                        mPhotoPath = null; // Invalidate path
+                        mImgUri = (mCurrNote != null) ? mCurrNote.getImgUri() : null; // Revert
+                        loadImage(mImgUri);
+                    }
+                } else { // Camera cancelled or failed
+                    mPhotoPath = null; // Critically, nullify mPhotoPath if camera was cancelled
+                    // Revert mImgUri to what it was before attempting camera, or null if new note.
+                    // If mCurrNote exists and had an image, mImgUri should reflect that.
+                    // If mCurrNote is new or had no image, mImgUri should be null.
+                    if (mCurrNote != null && mCurrNote.getImgUri() != null) {
+                        mImgUri = mCurrNote.getImgUri();
+                    } else {
                         mImgUri = null;
                     }
+                    loadImage(mImgUri); // Refresh ImageView
+                    Toast.makeText(this, "Captura de foto cancelada.", Toast.LENGTH_SHORT).show();
                 }
+                break;
+            case REQUEST_CODE_SCHEDULE_EXACT_ALARM_SETTINGS:
+                // User has returned from exact alarm settings.
+                // Re-check and potentially show date/time pickers if they click "Remind" again.
+                // Or, you could try to directly proceed if you stashed the intent.
+                // For now, let them click "Remind" again.
+                Log.d(TAG_PERMISSION, "Returned from Exact Alarm settings. User should try setting reminder again.");
+                Toast.makeText(this, "Por favor, intente establecer el recordatorio de nuevo.", Toast.LENGTH_LONG).show();
                 break;
             default:
                 break;
@@ -334,14 +371,12 @@ public class EditNoteActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.remind) {
-            if (mCurrNote != null) {
-                if (mRemindDate == null) {
-                    checkNotificationPermissionAndCreateAlarm();
-                } else {
-                    Utils.showMessage(this, "Esta nota ya tiene un recordatorio");
-                }
+            if (mCurrNote != null) { // Ensure mCurrNote is initialized
+                // Allow modifying existing reminder or setting a new one
+                checkPermissionsAndThenCreateAlarmFlow();
             } else {
-                Utils.showMessage(this, "Debes agregar esta nota primero");
+                // This should ideally not happen if mCurrNote is initialized in onCreate
+                Utils.showMessage(this, "Error: La nota no está disponible. Intente de nuevo.");
             }
         }
         return super.onOptionsItemSelected(item);
@@ -352,8 +387,8 @@ public class EditNoteActivity extends AppCompatActivity {
         if (mPlayer != null) {
             if (mPlayer.isPlaying()) {
                 mPlayer.stop();
-                mPlayer.release();
             }
+            mPlayer.release();
             mPlayer = null;
         }
     }
@@ -364,39 +399,228 @@ public class EditNoteActivity extends AppCompatActivity {
         return super.onSupportNavigateUp();
     }
     @Override
+    public void onBackPressed() {
+        updateOrSaveNote();
+        super.onBackPressed();
+    }
+
+    void updateOrSaveNote() {
+        String title = mTitle.getText().toString();
+        String content = mContent.getText().toString();
+
+        if (title.isEmpty() && content.isEmpty() && mImgUri == null && mAudioPath == null && mLocation == null) {
+            // If the note is completely empty and it's a new note (not an update of an existing one)
+            // or an existing note is made completely empty, consider not saving or deleting it.
+            // For simplicity, we'll save it if it was an update, or not save if new and empty.
+            if (mUpdate && mCurrNote != null && mCurrNote.getUid() > 0) {
+                // If it was an update, and it's now empty, maybe mark for deletion or save as empty.
+                // Current logic will save it as empty.
+            } else {
+                Log.d("EditNoteActivity", "Not saving empty new note.");
+                return; // Don't save an entirely empty new note
+            }
+        }
+
+
+        // Ensure mCurrNote is not null if we are updating
+        if (mUpdate && mCurrNote == null) {
+            Log.e("EditNoteActivity", "Attempting to update a null mCurrNote. This should not happen.");
+            // Potentially fetch the note again or handle error
+            if (mCurrentNoteId != -1) {
+                mCurrNote = mNoteRepository.getById(mCurrentNoteId); // Try to recover
+                if (mCurrNote == null) {
+                    Utils.showMessage(this, "Error al guardar: no se encontró la nota original.");
+                    return;
+                }
+            } else {
+                Utils.showMessage(this, "Error al guardar: ID de nota inválido.");
+                return;
+            }
+        }
+
+
+        if (mUpdate) { // Existing note
+            mCurrNote.setTitle(title);
+            mCurrNote.setContent(content);
+            mCurrNote.setImgUri(mImgUri);
+            mCurrNote.setRemindDate(mRemindDate);
+            mCurrNote.setAudio(mAudioPath);
+            mCurrNote.setLocation(mLocation);
+            mNoteRepository.update(mCurrNote);
+        } else { // New note
+            if (!title.isEmpty() || !content.isEmpty() || mImgUri != null || mAudioPath != null || mLocation != null) {
+                Note newNote = new Note(title, content, mImgUri);
+                newNote.setImgUri(mImgUri);
+                newNote.setAudio(mAudioPath);
+                newNote.setLocation(mLocation);
+                mNoteRepository.addNote(newNote);
+                // After adding, we might want to get the UID for future operations if the user stays on screen
+                // This part is tricky without observing the insertion result.
+                // For now, we assume the activity will be finished or reloaded for an existing note.
+            }
+        }
+
+        // Scan file if a new photo was taken via camera
+        if (mPhotoPath != null && mImgUri != null && new File(mPhotoPath).exists()) {
+            // Check if mImgUri corresponds to mPhotoPath (i.e., it's a FileProvider URI)
+            if (mImgUri.startsWith("content://") && mImgUri.contains("com.example.wallnotes.fileprovider")) {
+                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                File f = new File(mPhotoPath);
+                Uri photoFileUriForScanner = Uri.fromFile(f); // Use file URI for media scanner
+                mediaScanIntent.setData(photoFileUriForScanner);
+                sendBroadcast(mediaScanIntent);
+                Log.d("EditNoteActivity", "Media scanner broadcast sent for: " + mPhotoPath);
+            }
+        }
+    }
+
+    public void openCamera() {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Create the File where the photo should go
+        File photoFile = null;
+        try {
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+            String imageFileName = "JPEG_" + timeStamp + "_";
+            File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            photoFile = File.createTempFile(
+                    imageFileName,  /* prefix */
+                    ".jpg",         /* suffix */
+                    storageDir      /* directory */
+            );
+            mPhotoPath = photoFile.getAbsolutePath(); // Save file path
+        } catch (IOException ex) {
+            Log.e("EditNoteActivity", "Error creating image file", ex);
+            Toast.makeText(this, "Error al crear archivo de imagen.", Toast.LENGTH_SHORT).show();
+            mPhotoPath = null; // Ensure path is null on error
+            return;
+        }
+
+        if (photoFile != null) {
+            Uri photoURI = FileProvider.getUriForFile(this,
+                    "com.example.wallnotes.fileprovider",
+                    photoFile);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+            startActivityForResult(intent, REQUEST_CAMERA);
+        }
+    }
+
+    private void checkPermissionsAndThenCreateAlarmFlow() {
+        if (mCurrNote == null || (mUpdate && mCurrNote.getUid() == 0 && mCurrentNoteId == -1) ) {
+            Utils.showMessage(this, "Guarda la nota primero para agregar un recordatorio.");
+            // Prompt to save the note first if it's a new, unsaved note
+            new AlertDialog.Builder(this)
+                    .setTitle("Guardar Nota")
+                    .setMessage("Debes guardar la nota antes de poder agregar un recordatorio. ¿Deseas guardarla ahora?")
+                    .setPositiveButton("Guardar", (dialog, which) -> {
+                        updateOrSaveNote();
+                        // After saving, mCurrNote should be updated or a new ID available.
+                        // This is complex as addNote is async. For now, tell user to try again.
+                        if (mCurrNote != null && mCurrNote.getUid() > 0) {
+                            Log.d(TAG_PERMISSION, "Nota guardada, procediendo con permisos de recordatorio.");
+                            proceedWithNotificationPermissionCheck();
+                        } else {
+                            // If it's a new note, its ID isn't immediately available here without more complex handling.
+                            // Fetching it or observing LiveData would be needed.
+                            Toast.makeText(EditNoteActivity.this, "Nota guardada. Por favor, presiona 'Recordatorio' de nuevo.", Toast.LENGTH_LONG).show();
+                        }
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+            return;
+        }
+        proceedWithNotificationPermissionCheck();
+    }
+
+    private void proceedWithNotificationPermissionCheck() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG_PERMISSION, "POST_NOTIFICATIONS permission already granted.");
+                proceedWithExactAlarmPermissionCheck();
+            } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Permiso de Notificación Necesario")
+                        .setMessage("WallNotes necesita mostrar notificaciones para los recordatorios. Por favor, concede el permiso.")
+                        .setPositiveButton("OK", (dialog, which) -> ActivityCompat.requestPermissions(EditNoteActivity.this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE_POST_NOTIFICATIONS))
+                        .setNegativeButton("Cancelar", (dialog, which) -> Toast.makeText(this, "Permiso de notificación denegado. No se pueden crear recordatorios.", Toast.LENGTH_SHORT).show())
+                        .show();
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE_POST_NOTIFICATIONS);
+            }
+        } else {
+            // Pre-Tiramisu, no runtime permission for notifications needed
+            Log.d(TAG_PERMISSION, "Pre-Tiramisu: No POST_NOTIFICATIONS runtime permission needed.");
+            proceedWithExactAlarmPermissionCheck();
+        }
+    }
+
+    private void proceedWithExactAlarmPermissionCheck() {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager == null) {
+            Utils.showMessage(this, "No se pudo acceder al servicio de alarmas.");
+            return;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (alarmManager.canScheduleExactAlarms()) {
+                Log.d(TAG_PERMISSION, "SCHEDULE_EXACT_ALARM permission granted.");
+                createAlarm(); // All permissions good, show date/time picker
+            } else {
+                Log.d(TAG_PERMISSION, "SCHEDULE_EXACT_ALARM permission NOT granted. Showing dialog.");
+                new AlertDialog.Builder(this)
+                        .setTitle("Permiso para Alarmas Exactas Necesario")
+                        .setMessage("Para asegurar que los recordatorios funcionen correctamente, WallNotes necesita permiso para programar alarmas exactas. Por favor, activa este permiso en la siguiente pantalla.")
+                        .setPositiveButton("Ir a Configuración", (dialog, which) -> {
+                            Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                            // Optionally, direct to your app's specific settings
+                            // intent.setData(Uri.parse("package:" + getPackageName()));
+                            try {
+                                startActivityForResult(intent, REQUEST_CODE_SCHEDULE_EXACT_ALARM_SETTINGS);
+                            } catch (Exception e) {
+                                Log.e(TAG_PERMISSION, "Error starting ACTION_REQUEST_SCHEDULE_EXACT_ALARM", e);
+                                Toast.makeText(this, "No se pudo abrir la configuración. Habilita 'Alarmas y recordatorios' manualmente para WallNotes.", Toast.LENGTH_LONG).show();
+                            }
+                        })
+                        .setNegativeButton("Cancelar", (dialog, which) -> Toast.makeText(this, "Permiso para alarmas exactas denegado. No se pueden crear recordatorios precisos.", Toast.LENGTH_SHORT).show())
+                        .show();
+            }
+        } else {
+            // Pre-S, no special permission for exact alarms needed beyond manifest
+            Log.d(TAG_PERMISSION, "Pre-S: No SCHEDULE_EXACT_ALARM runtime permission needed.");
+            createAlarm(); // Show date/time picker
+        }
+    }
+
+
+    @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQUEST_CAMERA:
-                if (permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     openCamera();
                 } else {
-                    Utils.showMessage(this, "Debes aceptar los permisos");
+                    Utils.showMessage(this, "Permisos de cámara denegados");
                 }
                 break;
             case REQUEST_RECORD_AUDIO:
-                if (permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                        (permissions.length < 2 || grantResults[1] == PackageManager.PERMISSION_GRANTED)) { // Check both if requested
                     openRecordDialog();
                 } else {
-                    Utils.showMessage(this, "Debes aceptar los permisos");
+                    Utils.showMessage(this, "Debes aceptar los permisos de audio y almacenamiento");
                 }
                 break;
             case REQUEST_GPS:
-                if (permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     getPos();
                 } else {
-                    Utils.showMessage(this, "Debes aceptar los permisos");
+                    Utils.showMessage(this, "Debes aceptar los permisos de ubicación");
                 }
                 break;
             case REQUEST_CODE_POST_NOTIFICATIONS:
-                if (permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    Log.d(TAG_PERMISSION, "POST_NOTIFICATIONS permission granted by user after request.");
-                    if (mCurrNote != null && mRemindDate == null) {
-                        Log.d(TAG_PERMISSION, "Permission granted. Attempting to create alarm.");
-                        createAlarm();
-                    } else {
-                        Log.d(TAG_PERMISSION, "Permission granted, but conditions for alarm not met now.");
-                    }
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    Log.d(TAG_PERMISSION, "POST_NOTIFICATIONS permission granted by user.");
+                    proceedWithExactAlarmPermissionCheck(); // Notification perm granted, now check exact alarm
                 } else {
                     Log.w(TAG_PERMISSION, "POST_NOTIFICATIONS permission denied by user.");
                     Toast.makeText(this, "Permiso de notificación denegado. Los recordatorios no se mostrarán.", Toast.LENGTH_LONG).show();
@@ -404,94 +628,8 @@ public class EditNoteActivity extends AppCompatActivity {
                 break;
         }
     }
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        updateOrSaveNote();
-    }
-    void updateOrSaveNote() {
-        String title = mTitle.getText().toString();
-        String content = mContent.getText().toString();
-        if (!title.isEmpty()) {
-            Note note = new Note(title, content, null);
-            note.setAudio(mAudioPath);
-            note.setLocation(mLocation);
-            if (mPhotoPath != null) {
-                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                File f = new File(mPhotoPath);
-                Uri contentUri = Uri.fromFile(f);
-                mediaScanIntent.setData(contentUri);
-                sendBroadcast(mediaScanIntent);
-                mImgUri = contentUri.toString();
-            }
-            if (mUpdate && mCurrNote != null) {
-                mCurrNote.setContent(content);
-                mCurrNote.setTitle(title);
-                mCurrNote.setImgUri(mImgUri);
-                mCurrNote.setRemindDate(mRemindDate);
-                mCurrNote.setAudio(mAudioPath);
-                mCurrNote.setLocation(mLocation);
-                mNoteRepository.update(mCurrNote);
-            } else {
-                note.setImgUri(mImgUri);
-                mNoteRepository.addNote(note);
-            }
-        }
-    }
-    public void openCamera() {
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        String timeStamp = getDateInstance().format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        try {
-            File image = File.createTempFile(
-                    imageFileName,
-                    ".jpg",
-                    storageDir
-            );
-            mPhotoPath = image.getAbsolutePath();
-            Uri photoUri = FileProvider.getUriForFile(this, "com.example.wallnotes.fileprovider", image);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-            startActivityForResult(intent, REQUEST_CAMERA);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    private void checkNotificationPermissionAndCreateAlarm() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
-                    PackageManager.PERMISSION_GRANTED) {
-                // Permiso ya concedido
-                Log.d(TAG_PERMISSION, "POST_NOTIFICATIONS permission already granted. Creating alarm.");
-                createAlarm();
-            } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)) {
-                // Muestra una explicación al usuario
-                new AlertDialog.Builder(this)
-                        .setTitle("Permiso de Notificación Necesario")
-                        .setMessage("WallNotes necesita mostrar notificaciones para los recordatorios de tus notas. Por favor, concede el permiso.")
-                        .setPositiveButton("OK", (dialog, which) -> {
-                            ActivityCompat.requestPermissions(EditNoteActivity.this,
-                                    new String[]{Manifest.permission.POST_NOTIFICATIONS},
-                                    REQUEST_CODE_POST_NOTIFICATIONS);
-                        })
-                        .setNegativeButton("Cancelar", (dialog, which) -> {
-                            Log.w(TAG_PERMISSION, "User cancelled rationale for POST_NOTIFICATIONS.");
-                            Toast.makeText(this, "Permiso de notificación es necesario para los recordatorios.", Toast.LENGTH_SHORT).show();
-                        })
-                        .show();
-            } else {
-                // Solicitar directamente el permiso
-                Log.d(TAG_PERMISSION, "Requesting POST_NOTIFICATIONS permission.");
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
-                        REQUEST_CODE_POST_NOTIFICATIONS);
-            }
-        } else {
-            // Versiones anteriores a Android 13 no necesitan este permiso en tiempo de ejecución
-            Log.d(TAG_PERMISSION, "Pre-Tiramisu: No runtime permission needed for notifications. Creating alarm.");
-            createAlarm();
-        }
-    }
+
+
     private void setRemindDate() {
         if (mRemindDate != null) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, MMM d, yyyy 'at' h:mm a", Locale.getDefault());
@@ -503,29 +641,34 @@ public class EditNoteActivity extends AppCompatActivity {
         }
     }
     public void loadImage(String uri) {
-        Glide.with(this)
-                .load(uri)
-                .error(R.drawable.reload)
-                .into(mImageView);
+        if (uri != null && !uri.isEmpty()) {
+            mImageView.setVisibility(View.VISIBLE);
+            Glide.with(this)
+                    .load(Uri.parse(uri)) // Ensure it's parsed to Uri if it's a string
+                    .error(R.drawable.reload) // Shown if Glide fails to load the valid URI
+                    .into(mImageView);
+        } else {
+            mImageView.setImageDrawable(null); // Clear current image
+            mImageView.setVisibility(View.GONE); // Hide if no image
+        }
     }
 
     void cancelAlarm() {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent myIntent = new Intent(getApplicationContext(), NotifierAlarm.class);
-        // Asegúrate de que mCurrNote y su Uid no sean nulos antes de usarlos.
-        if (mCurrNote == null) {
-            // Manejar el caso donde mCurrNote es null, quizás mostrar un mensaje o log.
-            // No se puede cancelar una alarma sin su identificador.
-            Log.e("EditNoteActivity", "mCurrNote es null en cancelAlarm, no se puede cancelar.");
+        if (alarmManager == null || mCurrNote == null || mCurrNote.getUid() == 0) {
+            Log.e("EditNoteActivity", "Cannot cancel alarm: AlarmManager null, mCurrNote null, or note not saved.");
+            if (mCurrNote != null && mCurrNote.getUid() == 0) { // If note exists but not saved
+                // This implies it's a new note, so no alarm to cancel anyway
+            }
             return;
         }
 
-        int flags;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flags = PendingIntent.FLAG_NO_CREATE | PendingIntent.FLAG_IMMUTABLE;
-        } else {
-            flags = PendingIntent.FLAG_NO_CREATE;
+        Intent myIntent = new Intent(getApplicationContext(), NotifierAlarm.class);
+        int flags = PendingIntent.FLAG_NO_CREATE;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // FLAG_IMMUTABLE from API 23 with S, but safer here
+            flags |= PendingIntent.FLAG_IMMUTABLE;
         }
+
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 getApplicationContext(),
                 mCurrNote.getUid(),
@@ -536,120 +679,190 @@ public class EditNoteActivity extends AppCompatActivity {
         if (pendingIntent != null) {
             alarmManager.cancel(pendingIntent);
             pendingIntent.cancel();
+            Log.d("EditNoteActivity", "Alarm cancelled for note UID: " + mCurrNote.getUid());
+        } else {
+            Log.d("EditNoteActivity", "No alarm found to cancel for note UID: " + mCurrNote.getUid());
         }
-        mRemindDate = null;
+        mRemindDate = null; // Clear the remind date model
+        // UI update will be handled by setRemindDate() called after this
     }
+
     void createAlarm() {
-        final Calendar newCalender = Calendar.getInstance();
-        Context context = this; // o getActivity()
+        // This method is called AFTER all necessary permissions are confirmed.
 
-// Obtener el ID del estilo del DatePickerDialog desde el tema actual de la actividad
-        TypedValue outValue = new TypedValue();
-        context.getTheme().resolveAttribute(R.attr.appDatePickerDialogTheme, outValue, true);
-        int datePickerDialogThemeResId = outValue.resourceId;
+        if (mCurrNote == null || (mUpdate && mCurrNote.getUid() == 0 && mCurrentNoteId == -1)) {
+            Utils.showMessage(this, "La nota debe guardarse primero para establecer un recordatorio.");
+            // This check is mostly redundant now due to checks in checkPermissionsAndThenCreateAlarmFlow
+            // but kept as a safeguard.
+            return;
+        }
 
-        DatePickerDialog dialog = new DatePickerDialog(EditNoteActivity.this, datePickerDialogThemeResId, (view, year, month, dayOfMonth) -> {
-            final Calendar newDate = Calendar.getInstance();
-            Calendar newTime = Calendar.getInstance();
-            TimePickerDialog time = new TimePickerDialog(EditNoteActivity.this, (view1, hourOfDay, minute) -> {
-                newDate.set(year, month, dayOfMonth, hourOfDay, minute, 0);
-                Calendar tem = Calendar.getInstance(); // Para comparar con la hora actual
 
-                if (newDate.getTimeInMillis() > tem.getTimeInMillis()) { // Asegúrate de que la fecha/hora sea en el futuro
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.setTime(newDate.getTime());
-                    calendar.set(Calendar.SECOND, 0); // No necesitamos precisión de segundos para la alarma
+        MaterialDatePicker.Builder<Long> datePickerBuilder = MaterialDatePicker.Builder.datePicker();
+        datePickerBuilder.setTitleText("Seleccionar Fecha");
 
-                    // Asegurarse de que mCurrNote no sea null antes de usarlo para el UID
-                    if (mCurrNote == null) {
-                        Log.e("CreateAlarm", "mCurrNote es null, no se puede crear alarma sin UID.");
-                        Utils.showMessage(EditNoteActivity.this, "Error: No se pudo identificar la nota para el recordatorio.");
-                        return;
+        CalendarConstraints.Builder constraintsBuilder = new CalendarConstraints.Builder();
+        constraintsBuilder.setValidator(DateValidatorPointForward.now());
+        datePickerBuilder.setCalendarConstraints(constraintsBuilder.build());
+
+        // Set initial selection to current reminder date if exists, else today
+        long initialSelection = MaterialDatePicker.todayInUtcMilliseconds();
+        if (mRemindDate != null) {
+            Calendar initialCal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+            initialCal.setTime(mRemindDate);
+            // Clear time part for date picker, MaterialDatePicker expects midnight UTC for date selection
+            initialCal.set(Calendar.HOUR_OF_DAY, 0);
+            initialCal.set(Calendar.MINUTE, 0);
+            initialCal.set(Calendar.SECOND, 0);
+            initialCal.set(Calendar.MILLISECOND, 0);
+            initialSelection = initialCal.getTimeInMillis();
+        }
+        datePickerBuilder.setSelection(initialSelection);
+
+
+        final MaterialDatePicker<Long> datePicker = datePickerBuilder.build();
+
+        datePicker.addOnPositiveButtonClickListener(selection -> {
+            Calendar selectedDateCalendarUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+            selectedDateCalendarUtc.setTimeInMillis(selection);
+
+            Calendar newDateTimeCalendar = Calendar.getInstance();
+            newDateTimeCalendar.set(
+                    selectedDateCalendarUtc.get(Calendar.YEAR),
+                    selectedDateCalendarUtc.get(Calendar.MONTH),
+                    selectedDateCalendarUtc.get(Calendar.DAY_OF_MONTH)
+            );
+
+            Calendar currentTime = Calendar.getInstance();
+            if (mRemindDate != null) { // If modifying, prefill with old time
+                Calendar existingTimeCal = Calendar.getInstance();
+                existingTimeCal.setTime(mRemindDate);
+                currentTime.set(Calendar.HOUR_OF_DAY, existingTimeCal.get(Calendar.HOUR_OF_DAY));
+                currentTime.set(Calendar.MINUTE, existingTimeCal.get(Calendar.MINUTE));
+            }
+
+
+            MaterialTimePicker.Builder timePickerBuilder = new MaterialTimePicker.Builder()
+                    .setTimeFormat(TimeFormat.CLOCK_24H)
+                    .setHour(currentTime.get(Calendar.HOUR_OF_DAY))
+                    .setMinute(currentTime.get(Calendar.MINUTE))
+                    .setTitleText("Seleccionar Hora");
+
+            final MaterialTimePicker timePicker = timePickerBuilder.build();
+
+            timePicker.addOnPositiveButtonClickListener(dialog -> {
+                int hourOfDay = timePicker.getHour();
+                int minute = timePicker.getMinute();
+
+                newDateTimeCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                newDateTimeCalendar.set(Calendar.MINUTE, minute);
+                newDateTimeCalendar.set(Calendar.SECOND, 0);
+                newDateTimeCalendar.set(Calendar.MILLISECOND, 0);
+
+                Calendar nowCalendar = Calendar.getInstance();
+
+                if (newDateTimeCalendar.getTimeInMillis() > nowCalendar.getTimeInMillis()) {
+                    // Ensure mCurrNote has a valid UID. This should be true if we reached here
+                    // due to the checks in checkPermissionsAndThenCreateAlarmFlow
+                    if (mCurrNote == null || mCurrNote.getUid() == 0) {
+                        if (mCurrentNoteId != -1) { // Try to recover if it's an existing note
+                            mCurrNote = mNoteRepository.getById(mCurrentNoteId);
+                        }
+                        if (mCurrNote == null || mCurrNote.getUid() == 0) { // Still no valid UID
+                            Log.e("CreateAlarm", "mCurrNote UID is 0 or mCurrNote is null. Cannot set alarm without saving note first.");
+                            Utils.showMessage(EditNoteActivity.this, "Error: Guarda la nota primero para establecer el recordatorio.");
+                            return;
+                        }
                     }
 
-                    Intent intent = new Intent(this, NotifierAlarm.class);
+
+                    Intent intent = new Intent(EditNoteActivity.this, NotifierAlarm.class);
                     intent.putExtra("uid", mCurrNote.getUid());
+                    intent.putExtra("title", mCurrNote.getTitle()); // Pass title for notification
 
-                    int flags;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
-                    } else {
-                        flags = PendingIntent.FLAG_UPDATE_CURRENT;
-                    }
-                    PendingIntent pendingIntent = PendingIntent.getBroadcast(this, mCurrNote.getUid(), intent, flags);
+                    int flagsPi = PendingIntent.FLAG_UPDATE_CURRENT;
+
+                    flagsPi |= PendingIntent.FLAG_IMMUTABLE;
+                    PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                            EditNoteActivity.this,
+                            mCurrNote.getUid(),
+                            intent,
+                            flagsPi
+                    );
 
                     AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-
-                    if (alarmManager == null) { // Buena práctica verificar si el servicio está disponible
-                        Utils.showMessage(this, "No se pudo acceder al servicio de alarmas.");
+                    if (alarmManager == null) {
+                        Utils.showMessage(EditNoteActivity.this, "No se pudo acceder al servicio de alarmas.");
                         return;
                     }
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        if (alarmManager.canScheduleExactAlarms()) {
-                            alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
-                            // Configuración exitosa de la alarma
-                            mRemindDate = calendar.getTime();
-                            if (mCurrNote != null) { // Doble verificación, aunque ya se hizo arriba
-                                mCurrNote.setRemindDate(mRemindDate);
-                            }
-                            setRemindDate(); // Actualiza la UI
-                            Utils.showMessage(this, "Recordatorio agregado");
-                        } else {
-                            // Permiso no concedido, guiar al usuario
-                            new AlertDialog.Builder(this)
-                                    .setTitle("Permiso Necesario")
-                                    .setMessage("Para establecer recordatorios precisos, WallNotes necesita permiso para programar alarmas exactas. ¿Deseas ir a la configuración para concederlo?")
-                                    .setPositiveButton("Ir a Configuración", (dialogInterface, i) -> {
-                                        Intent permissionIntent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
-
-                                        try {
-                                            startActivity(permissionIntent);
-                                            Utils.showMessage(EditNoteActivity.this, "Por favor, activa el permiso para 'WallNotes' y luego intenta agregar el recordatorio de nuevo.");
-                                        } catch (Exception e) {
-                                            Log.e("CreateAlarm", "Error al abrir la configuración de SCHEDULE_EXACT_ALARM", e);
-                                            Utils.showMessage(EditNoteActivity.this, "No se pudo abrir la configuración de permisos. Por favor, habilita manualmente el permiso de 'Alarmas y recordatorios' para WallNotes desde la configuración de la aplicación.");
-                                        }
-                                    })
-                                    .setNegativeButton("Cancelar", (dialogInterface, i) -> {
-                                        Utils.showMessage(this, "El recordatorio no se pudo agregar sin el permiso.");
-                                    })
-                                    .show();
-                        }
-                    } else {
-                        // Para versiones anteriores a Android S (API 31)
-                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
-                        // Configuración exitosa de la alarma
-                        mRemindDate = calendar.getTime();
-                        if (mCurrNote != null) {
-                            mCurrNote.setRemindDate(mRemindDate);
-                        }
-                        setRemindDate(); // Actualiza la UI
-                        Utils.showMessage(this, "Recordatorio agregado");
+                    // The canScheduleExactAlarms check is primarily done *before* showing this dialog flow.
+                    // This is a final safeguard.
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                        Utils.showMessage(EditNoteActivity.this, "Permiso para alarmas exactas no concedido. El recordatorio no se puede establecer.");
+                        // Optionally re-prompt to go to settings, but user should have done this already.
+                        return;
                     }
 
+                    try {
+                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, newDateTimeCalendar.getTimeInMillis(), pendingIntent);
+                        mRemindDate = newDateTimeCalendar.getTime();
+                        if (mCurrNote != null) { // mCurrNote should be valid here
+                            mCurrNote.setRemindDate(mRemindDate);
+                        }
+                        setRemindDate(); // Update UI
+                        Utils.showMessage(EditNoteActivity.this, "Recordatorio agregado/actualizado");
+                        // Note: updateOrSaveNote() will persist this mRemindDate when activity closes/navigates up
+                    } catch (SecurityException se) {
+                        Log.e("CreateAlarm", "SecurityException setting exact alarm. Missing SCHEDULE_EXACT_ALARM?", se);
+                        Utils.showMessage(EditNoteActivity.this, "Error de seguridad al establecer la alarma. Asegúrate de tener los permisos necesarios.");
+                    }
+
+
                 } else {
-                    Utils.showMessage(this, "Tiempo inválido. Por favor, selecciona una fecha y hora en el futuro.");
+                    Utils.showMessage(EditNoteActivity.this, "Tiempo inválido. Por favor, selecciona una fecha y hora en el futuro.");
                 }
-            }, newTime.get(Calendar.HOUR_OF_DAY), newTime.get(Calendar.MINUTE), true);
-            time.show();
-        }, newCalender.get(Calendar.YEAR), newCalender.get(Calendar.MONTH), newCalender.get(Calendar.DAY_OF_MONTH));
-        dialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
-        dialog.show();
+            });
+            timePicker.show(getSupportFragmentManager(), "MATERIAL_TIME_PICKER_TAG");
+        });
+        datePicker.addOnNegativeButtonClickListener(dialog -> Utils.showMessage(EditNoteActivity.this, "Selección de fecha cancelada."));
+        datePicker.addOnCancelListener(dialog -> Utils.showMessage(EditNoteActivity.this, "Selección de fecha cerrada."));
+        datePicker.show(getSupportFragmentManager(), "MATERIAL_DATE_PICKER_TAG");
     }
+
     private void observeNote() {
         if (mCurrentNoteLiveData == null) return;
 
         mCurrentNoteLiveData.observe(this, note -> {
             if (note != null) {
-                mCurrNote = note;
+                mCurrNote = note; // This is the authoritative Note object
                 mTitle.setText(note.getTitle());
                 mContent.setText(note.getContent());
                 mRemindDate = note.getRemindDate();
+                mImgUri = note.getImgUri(); // Load image URI from note
+                mAudioPath = note.getAudio();
+                mLocation = note.getLocation();
+
                 setRemindDate();
+                loadImage(mImgUri); // Load image using the URI from the note
+
+                if (mAudioPath != null) {
+                    mLinearLayout.setVisibility(View.VISIBLE);
+                } else {
+                    mLinearLayout.setVisibility(View.GONE);
+                }
+                if (mLocation != null) {
+                    mTvLocation.setVisibility(View.VISIBLE);
+                    mTvLocation.setText(mLocation);
+                } else {
+                    mTvLocation.setVisibility(View.GONE);
+                    mTvLocation.setText("");
+                }
                 mUpdate = true;
             } else {
-                Log.w("EditNoteActivity", "La nota con ID " + mCurrentNoteId + " ya no existe.");
+                // Note might have been deleted from elsewhere
+                Log.w("EditNoteActivity", "La nota con ID " + mCurrentNoteId + " ya no existe o no se pudo cargar.");
+                Toast.makeText(this, "La nota ya no está disponible.", Toast.LENGTH_SHORT).show();
                 finish();
             }
         });
@@ -657,7 +870,7 @@ public class EditNoteActivity extends AppCompatActivity {
     void openRecordDialog() {
         RecordDialog recordDialog = RecordDialog.newInstance("Record Audio");
         recordDialog.setMessage("Presiona para grabar");
-        recordDialog.show(getSupportFragmentManager(), "TAG");
+        recordDialog.show(getSupportFragmentManager(), "TAG_RECORD_DIALOG");
         recordDialog.setPositiveButton("Guardar", path -> {
             if (mLinearLayout.getVisibility() == View.GONE) {
                 mLinearLayout.setVisibility(View.VISIBLE);
@@ -667,18 +880,21 @@ public class EditNoteActivity extends AppCompatActivity {
     }
 
     void playAudio(String path) {
-        if (mPlayer != null && mPlayer.isPlaying()) {
+        if (mPlayer == null) mPlayer = new MediaPlayer(); // Re-initialize if released
+
+        if (mPlayer.isPlaying()) {
             mPlayer.stop();
-            mProgress.setProgress(0);
-            mPlayer.reset();
         }
+        mPlayer.reset(); // Reset before setting new data source
+        mProgress.setProgress(0);
+
         Uri mediaUri = Uri.fromFile(new File(path));
         try {
             mPlayer.setDataSource(getBaseContext(), mediaUri);
-            mProgress.setProgress(0);
-            mPlayer.prepareAsync();
+            mPlayer.prepareAsync(); // Asynchronous preparation
         } catch (IOException ex) {
-            ex.printStackTrace();
+            Log.e("EditNoteActivity", "Error setting data source for audio", ex);
+            Toast.makeText(this, "Error al reproducir audio.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -686,44 +902,79 @@ public class EditNoteActivity extends AppCompatActivity {
         mTvLocation.setVisibility(View.VISIBLE);
         mTvLocation.setText("Cargando ubicación...");
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        if (locationManager == null) {
+            mTvLocation.setText("Servicio de ubicación no disponible.");
+            return;
+        }
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            mTvLocation.setText("Permiso de ubicación denegado.");
+            return;
+        }
+
         LocationListener locationListener = new LocationListener() {
             public void onLocationChanged(Location location) {
-                double altitude = location.getAltitude();
+                if (location == null) {
+                    mTvLocation.setText("No se pudo obtener la ubicación.");
+                    return;
+                }
+                // double altitude = location.getAltitude(); // Not typically used for address
                 double longitude = location.getLongitude();
                 double latitude = location.getLatitude();
                 Geocoder geo = new Geocoder(getApplicationContext(), Locale.getDefault());
                 List<Address> addresses = null;
                 try {
                     addresses = geo.getFromLocation(latitude, longitude, 1);
-                    if(!addresses.isEmpty())
-                    {
-                        mLocation = addresses.get(0).getFeatureName() + ", " + addresses.get(0).getLocality() +", " + addresses.get(0).getAdminArea() + ", " + addresses.get(0).getCountryName();
-                        mTvLocation.setVisibility(View.VISIBLE);
+                    if (addresses != null && !addresses.isEmpty()) {
+                        Address ads = addresses.get(0);
+                        StringBuilder sb = new StringBuilder();
+                        if (ads.getFeatureName() != null) sb.append(ads.getFeatureName());
+                        if (ads.getLocality() != null) {
+                            if (sb.length() > 0) sb.append(", ");
+                            sb.append(ads.getLocality());
+                        }
+                        if (ads.getAdminArea() != null) {
+                            if (sb.length() > 0) sb.append(", ");
+                            sb.append(ads.getAdminArea());
+                        }
+                        if (ads.getCountryName() != null) {
+                            if (sb.length() > 0) sb.append(", ");
+                            sb.append(ads.getCountryName());
+                        }
+                        mLocation = sb.toString();
                         mTvLocation.setText(mLocation);
-                    }else{
-                        mTvLocation.setVisibility(View.VISIBLE);
-                        mTvLocation.setText("Cargando ubicación...");
+                    } else {
+                        mTvLocation.setText("Ubicación no encontrada.");
+                        mLocation = "Lat: " + String.format(Locale.US, "%.4f", latitude) + ", Lon: " + String.format(Locale.US, "%.4f", longitude); // Fallback to coordinates
+                        mTvLocation.setText(mLocation);
                     }
                 } catch (IOException e) {
-                    Utils.showMessage(EditNoteActivity.this, "Ha ocurrido un error al obtener su posición");
+                    Log.e("EditNoteActivity", "Geocoder error", e);
+                    mTvLocation.setText("Error al obtener dirección.");
+                    mLocation = null; // Or fallback to coordinates
+                } finally {
+                    locationManager.removeUpdates(this); // Remove listener after one update
                 }
             }
             public void onProviderEnabled(String provider) {
+                mTvLocation.setText("Proveedor GPS habilitado. Obteniendo ubicación...");
             }
             public void onProviderDisabled(String provider) {
-                Utils.showMessage(EditNoteActivity.this, "Por favor, active el GPS y el internet");
+                Utils.showMessage(EditNoteActivity.this, "Por favor, active el GPS y/o la red para la ubicación.");
+                mTvLocation.setText("GPS/Red desactivado.");
+                mLocation = null;
             }
         };
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+
+        // Try Network provider first, then GPS
+        if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+        } else if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        } else {
+            mTvLocation.setText("Ningún proveedor de ubicación activo.");
+            Utils.showMessage(this, "Por favor, active el GPS o la ubicación por red.");
         }
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
     }
 }

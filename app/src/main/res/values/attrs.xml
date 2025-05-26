@@ -10,7 +10,6 @@
     <attr name="cardItemBackgroundDefault" format="color" />
 
     <attr name="menuItemTextColor" format="color" />
-    <attr name="appDatePickerDialogTheme" format="reference" />
 
 
 </resources>

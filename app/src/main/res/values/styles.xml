@@ -17,22 +17,7 @@
         <item name="android:textColor">@color/black</item>
     </style>
     <!-- En res/values/themes.xml (para temas claros) -->
-    <style name="MyAlertDialogTheme.Light" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
-        <!-- Aquí puedes poner los buttonBar...ButtonStyle si quieres que SOLO los diálogos tengan esos botones -->
-        <item name="buttonBarNegativeButtonStyle">@style/MyDialogButton.Light</item>
-        <item name="buttonBarPositiveButtonStyle">@style/MyDialogButton.Light</item>
-        <!-- Asegúrate que colorSurface y colorOnSurface estén bien para el diálogo -->
-        <item name="colorSurface">@color/dialog_surface_light</item> <!-- Un color claro para el fondo del diálogo -->
-        <item name="colorOnSurface">@color/dialog_on_surface_light</item> <!-- Texto/iconos sobre esa superficie -->
-    </style>
 
-    <!-- En res/values-night/themes.xml (para temas oscuros) -->
-    <style name="MyAlertDialogTheme.Dark" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
-        <item name="buttonBarNegativeButtonStyle">@style/MyDialogButton.Dark</item>
-        <item name="buttonBarPositiveButtonStyle">@style/MyDialogButton.Dark</item>
-        <item name="android:textColorSecondary">@color/black</item>
-        <item name="android:textColorPrimary">@color/black</item>"
-    </style>
 
     <style name="CustomMenuItemStyle" parent="Widget.AppCompat.TextView.SpinnerItem">
         <item name="android:textColor">?attr/menuItemTextColor</item>

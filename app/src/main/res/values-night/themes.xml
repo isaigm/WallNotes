@@ -1,23 +1,18 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-
-    <!-- En res/values/styles.xml o themes.xml -->
-
-
     <style name="oscuro" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Colores Primarios -->
 
-        <item name="colorPrimary">@color/dark_custom_primary</item>
+        <item name="colorPrimary">#FF546E7A</item>
         <item name="colorPrimaryVariant">@color/dark_custom_primary</item>
         <item name="colorOnPrimary">@color/dark_custom_on_primary</item>
 
         <!-- Colores Secundarios -->
         <item name="colorSecondary">@color/dark_custom_secondary</item>
         <item name="colorSecondaryVariant">@color/dark_custom_secondary_variant</item>
-        <item name="colorOnSecondary">@color/dark_custom_on_secondary</item>
 
         <!-- Fondos y Superficies -->
-        <item name="android:colorBackground">@color/dark_custom_background</item>
-        <item name="colorSurface">@color/dark_custom_surface</item>
+        <item name="android:colorBackground">@color/dark_custom_primary</item>
+        <item name="colorSurface">@color/dark_custom_primary</item>
 
         <!-- Colores "On" para texto/iconos -->
         <item name="colorOnBackground">@color/dark_custom_on_background</item>
@@ -39,7 +34,6 @@
 
         <item name="cardItemBackgroundSelected">#60FFFFFF</item>
         <item name="cardItemBackgroundDefault">@android:color/transparent</item>
-        <item name="appDatePickerDialogTheme">@style/MyAlertDialogTheme.Dark</item>
 
         <!-- Control sobre los iconos de la Barra de Estado (para que sean claros sobre fondo oscuro) -->
         <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
