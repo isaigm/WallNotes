@@ -1,6 +1,7 @@
 package com.example.wallnotes;
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
