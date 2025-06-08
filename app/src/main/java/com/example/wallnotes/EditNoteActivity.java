@@ -34,7 +34,6 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -51,7 +50,6 @@ import com.google.android.material.datepicker.DateValidatorPointForward;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
-
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -62,7 +60,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.TimeZone;
 
-import static java.text.DateFormat.getDateInstance;
 public class EditNoteActivity extends AppCompatActivity {
     static MediaPlayer mPlayer = null;
     private SeekBar mProgress;
@@ -132,7 +129,7 @@ public class EditNoteActivity extends AppCompatActivity {
         mTitle = findViewById(R.id.title);
         mContent = findViewById(R.id.content);
         mImageView = findViewById(R.id.image);
-        mContent.setMovementMethod(new ScrollingMovementMethod());
+        //mContent.setMovementMethod(new ScrollingMovementMethod());
 
         if (savedInstanceState != null) {
             mImgUri = savedInstanceState.getString("img_uri");
@@ -408,19 +405,6 @@ public class EditNoteActivity extends AppCompatActivity {
         String title = mTitle.getText().toString();
         String content = mContent.getText().toString();
 
-        if (title.isEmpty() && content.isEmpty() && mImgUri == null && mAudioPath == null && mLocation == null) {
-            // If the note is completely empty and it's a new note (not an update of an existing one)
-            // or an existing note is made completely empty, consider not saving or deleting it.
-            // For simplicity, we'll save it if it was an update, or not save if new and empty.
-            if (mUpdate && mCurrNote != null && mCurrNote.getUid() > 0) {
-                // If it was an update, and it's now empty, maybe mark for deletion or save as empty.
-                // Current logic will save it as empty.
-            } else {
-                Log.d("EditNoteActivity", "Not saving empty new note.");
-                return; // Don't save an entirely empty new note
-            }
-        }
-
 
         // Ensure mCurrNote is not null if we are updating
         if (mUpdate && mCurrNote == null) {
@@ -495,13 +479,11 @@ public class EditNoteActivity extends AppCompatActivity {
             return;
         }
 
-        if (photoFile != null) {
-            Uri photoURI = FileProvider.getUriForFile(this,
-                    "com.example.wallnotes.fileprovider",
-                    photoFile);
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-            startActivityForResult(intent, REQUEST_CAMERA);
-        }
+        Uri photoURI = FileProvider.getUriForFile(this,
+                "com.example.wallnotes.fileprovider",
+                photoFile);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+        startActivityForResult(intent, REQUEST_CAMERA);
     }
 
     private void checkPermissionsAndThenCreateAlarmFlow() {
@@ -657,17 +639,13 @@ public class EditNoteActivity extends AppCompatActivity {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null || mCurrNote == null || mCurrNote.getUid() == 0) {
             Log.e("EditNoteActivity", "Cannot cancel alarm: AlarmManager null, mCurrNote null, or note not saved.");
-            if (mCurrNote != null && mCurrNote.getUid() == 0) { // If note exists but not saved
-                // This implies it's a new note, so no alarm to cancel anyway
-            }
             return;
         }
 
         Intent myIntent = new Intent(getApplicationContext(), NotifierAlarm.class);
         int flags = PendingIntent.FLAG_NO_CREATE;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // FLAG_IMMUTABLE from API 23 with S, but safer here
-            flags |= PendingIntent.FLAG_IMMUTABLE;
-        }
+        // FLAG_IMMUTABLE from API 23 with S, but safer here
+        flags |= PendingIntent.FLAG_IMMUTABLE;
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 getApplicationContext(),
